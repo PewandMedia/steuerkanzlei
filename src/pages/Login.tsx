@@ -1,28 +1,58 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { ArrowRight, Eye, EyeOff, FileCheck2, Lock, Mail, ShieldCheck } from "lucide-react";
+import { ArrowRight, Briefcase, Crown, FileCheck2, Phone, ShieldCheck, Sparkles } from "lucide-react";
 import { usePageMeta } from "@/hooks/use-page-meta";
+import { Button } from "@/components/ui/button";
+
+const DEMO_PASSWORD = "demo-taxom-2026!";
+
+const ROLES = [
+  {
+    key: "Sekretariat",
+    email: "demo-sekretariat@taxom-demo.de",
+    title: "Sekretariat",
+    subtitle: "Sabine — Empfang & Mandanten-Kontakt",
+    description: "Mandanten kontaktieren, fehlende Belege anfordern, Fristen im Blick behalten.",
+    Icon: Phone,
+  },
+  {
+    key: "Sachbearbeiter",
+    email: "demo-sachbearbeiter@taxom-demo.de",
+    title: "Sachbearbeiter",
+    subtitle: "Simon — Buchhaltung & Vorbereitung",
+    description: "Belege erfassen, Buchungen anlegen, Buchhaltungen zur Prüfung freigeben.",
+    Icon: Briefcase,
+  },
+  {
+    key: "Chef",
+    email: "demo-chef@taxom-demo.de",
+    title: "Chef / Steuerberater",
+    subtitle: "Christina — Prüfung & Freigabe",
+    description: "Buchhaltungen prüfen, freigeben oder zurückweisen, gesamte Kanzlei überblicken.",
+    Icon: Crown,
+  },
+] as const;
 
 export default function Login() {
-  usePageMeta("TAXOM – Anmelden", "Internes Backoffice der Kanzlei TAXOM. Anmeldung für Mitarbeiter.");
+  usePageMeta(
+    "TAXOM Demo – Kanzlei-Backoffice testen",
+    "Interaktive Demo des TAXOM Kanzlei-Backoffices. Wählen Sie eine Rolle und testen Sie das System mit Beispieldaten.",
+  );
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [loadingRole, setLoadingRole] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const loginAs = async (email: string, roleKey: string) => {
+    setLoadingRole(roleKey);
+    const { error } = await supabase.auth.signInWithPassword({ email, password: DEMO_PASSWORD });
     if (error) {
-      toast({ title: "Fehler", description: error.message, variant: "destructive" });
+      toast({
+        title: "Demo-Anmeldung fehlgeschlagen",
+        description: error.message,
+        variant: "destructive",
+      });
+      setLoadingRole(null);
     }
-    setLoading(false);
   };
 
   return (
@@ -41,20 +71,25 @@ export default function Login() {
         <div className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-white/5 blur-3xl" aria-hidden />
         <div className="absolute -bottom-40 -left-20 h-96 w-96 rounded-full bg-white/5 blur-3xl" aria-hidden />
 
-        <div className="relative flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md border border-white/30 bg-white/10 text-sm font-semibold tracking-widest backdrop-blur">
-            TX
+        <div className="relative flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-md border border-white/30 bg-white/10 text-sm font-semibold tracking-widest backdrop-blur">
+              TX
+            </div>
+            <span className="text-lg font-semibold tracking-[0.3em]">TAXOM</span>
           </div>
-          <span className="text-lg font-semibold tracking-[0.3em]">TAXOM</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-medium tracking-wider uppercase backdrop-blur">
+            <Sparkles className="h-3 w-3" /> Live-Demo
+          </span>
         </div>
 
         <div className="relative max-w-md space-y-6">
           <h1 className="text-4xl font-semibold leading-tight tracking-tight">
-            Steuerberatung,<br />neu gedacht.
+            Testen Sie das<br />TAXOM Backoffice.
           </h1>
           <p className="text-base leading-relaxed text-white/75">
-            Das interne Backoffice der Kanzlei TAXOM. Entwickelt für unser Team,
-            nach unseren Abläufen, mit unseren Standards.
+            Digitale Kanzlei-Software für Steuerberater. Wählen Sie rechts eine Rolle
+            und erleben Sie den kompletten Ablauf mit echten Beispiel-Mandanten.
           </p>
 
           <div className="h-px w-24 bg-white/20" />
@@ -65,8 +100,8 @@ export default function Login() {
                 <ShieldCheck className="h-5 w-5" />
               </div>
               <div>
-                <p className="font-medium">Mandantendaten geschützt</p>
-                <p className="text-sm text-white/65">Berufsverschwiegenheit nach §203 StGB</p>
+                <p className="font-medium">DSGVO-konformes Hosting</p>
+                <p className="text-sm text-white/65">Rechenzentren in Deutschland</p>
               </div>
             </li>
             <li className="flex gap-4">
@@ -74,96 +109,81 @@ export default function Login() {
                 <FileCheck2 className="h-5 w-5" />
               </div>
               <div>
-                <p className="font-medium">Hosting in Deutschland</p>
-                <p className="text-sm text-white/65">DSGVO-konform, verschlüsselt</p>
+                <p className="font-medium">Rollenbasierte Workflows</p>
+                <p className="text-sm text-white/65">Sekretariat, Buchhaltung, Chef</p>
               </div>
             </li>
           </ul>
         </div>
 
-        <p className="relative text-xs text-white/50">© 2026 TAXOM Steuerkanzlei</p>
+        <p className="relative text-xs text-white/50">© 2026 TAXOM · Kanzlei-Software</p>
       </aside>
 
-      {/* Rechte Seite — Login-Formular */}
+      {/* Rechte Seite — Rollen-Auswahl */}
       <main className="flex items-center justify-center px-6 py-12 bg-background">
-        <div className="w-full max-w-sm space-y-8">
-          <div className="lg:hidden flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-brand text-brand-foreground text-xs font-semibold tracking-widest">
-              TX
+        <div className="w-full max-w-md space-y-8">
+          <div className="lg:hidden flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-brand text-brand-foreground text-xs font-semibold tracking-widest">
+                TX
+              </div>
+              <span className="text-base font-semibold tracking-[0.3em] text-foreground">TAXOM</span>
             </div>
-            <span className="text-base font-semibold tracking-[0.3em] text-foreground">TAXOM</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-0.5 text-[10px] font-medium tracking-wider uppercase text-muted-foreground">
+              <Sparkles className="h-3 w-3" /> Demo
+            </span>
           </div>
 
           <div className="space-y-2">
             <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-              Willkommen im Backoffice
+              Rolle auswählen
             </h2>
             <p className="text-sm text-muted-foreground">
-              Bitte melden Sie sich an, um fortzufahren.
+              Melden Sie sich mit einem Klick als eine der drei Rollen an. Alle
+              Daten sind Beispieldaten und werden regelmäßig zurückgesetzt.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="email">E-Mail</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="deine@email.de"
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Passwort</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  placeholder="••••••••••••"
-                  className="pl-10 pr-10"
-                />
+          <div className="space-y-3">
+            {ROLES.map(({ key, email, title, subtitle, description, Icon }) => {
+              const loading = loadingRole === key;
+              const disabled = loadingRole !== null;
+              return (
                 <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? "Passwort verbergen" : "Passwort anzeigen"}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  key={key}
+                  onClick={() => loginAs(email, key)}
+                  disabled={disabled}
+                  className="group w-full text-left rounded-xl border border-border bg-card p-4 transition-all hover:border-brand hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-brand transition-colors group-hover:bg-brand group-hover:text-brand-foreground">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-semibold text-foreground">{title}</p>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-brand" />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
+                      <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{description}</p>
+                      {loading && (
+                        <p className="text-xs text-brand mt-2 font-medium">Anmeldung läuft…</p>
+                      )}
+                    </div>
+                  </div>
                 </button>
-              </div>
-            </div>
+              );
+            })}
+          </div>
 
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-brand text-brand-foreground hover:bg-brand/90 group"
-            >
-              {loading ? "Anmeldung läuft..." : (
-                <>
-                  Anmelden
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                </>
-              )}
-            </Button>
-          </form>
-
-          <p className="text-xs text-muted-foreground text-center">
-            Kein Zugang? Wenden Sie sich an die Kanzleileitung.
-          </p>
+          <div className="rounded-lg border border-dashed border-border bg-muted/40 p-4 text-center space-y-2">
+            <p className="text-sm font-medium text-foreground">
+              Interessiert an TAXOM für Ihre Kanzlei?
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Schreiben Sie uns an <a href="mailto:kontakt@taxom.de" className="text-brand hover:underline">kontakt@taxom.de</a> für ein persönliches Angebot.
+            </p>
+          </div>
         </div>
       </main>
     </div>
