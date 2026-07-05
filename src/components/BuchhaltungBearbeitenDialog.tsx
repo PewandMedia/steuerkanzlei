@@ -43,7 +43,7 @@ export function BuchhaltungBearbeitenDialog({ open, onOpenChange, buchhaltung, o
   const [alsCoBehalten, setAlsCoBehalten] = useState(true);
   const [sachbearbeiter, setSachbearbeiter] = useState<{ id: string; name: string }[]>([]);
   const [dfv, setDfv] = useState<boolean>(buchhaltung.dauerfristverlaengerung ?? false);
-  const [automatisierungAktiv, setAutomatisierungAktiv] = useState<boolean>(buchhaltung.automatisierung_aktiv ?? false);
+  
   const [coBearbeiter, setCoBearbeiter] = useState<{ id: string; name: string }[]>([]);
   const [neuerCoId, setNeuerCoId] = useState<string>("");
   const [belegeingaenge, setBelegeingaenge] = useState<BelegeingangEntry[]>([]);
