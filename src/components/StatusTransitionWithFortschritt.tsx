@@ -1,5 +1,4 @@
 import { StatusTransition } from "@/components/StatusTransition";
-import { useBuchungsFortschritt } from "@/hooks/use-buchungs-fortschritt";
 import type { Database } from "@/integrations/supabase/types";
 
 type BuchhaltungStatus = Database["public"]["Enums"]["buchhaltung_status"];
@@ -10,33 +9,20 @@ interface Props {
   currentStatus: BuchhaltungStatus;
   rolle: BenutzerRolle;
   onStatusChanged: () => void;
-  /** Wenn false, wird nicht auf Belegbuchungen gewartet (Nur-Weiterleitung-Modus). */
-  automatisierungAktiv?: boolean;
 }
 
 /**
- * Wraps StatusTransition and computes whether all documents in this Buchhaltung
- * have been booked. If not, "Zur Prüfung senden" is disabled with an explanation.
+ * Passthrough für Kompatibilität. Früher hat diese Komponente auf den
+ * Buchungsfortschritt gewartet — TAXOM verwaltet jetzt nur noch die
+ * Weiterleitung, deshalb einfacher Wrapper um StatusTransition.
  */
-export function StatusTransitionWithFortschritt({ buchhaltungId, currentStatus, rolle, onStatusChanged, automatisierungAktiv = true }: Props) {
-  const { allBooked, offen, total, loading } = useBuchungsFortschritt(buchhaltungId);
-
-  // Only relevant for Sachbearbeiter on "In Bearbeitung" AND when automation is active
-  const shouldGate = automatisierungAktiv && currentStatus === "In Bearbeitung" && rolle === "Sachbearbeiter" && !loading;
-  // Only block when there are documents (total > 0) and not all are booked
-  const disablePruefung = shouldGate && total > 0 && !allBooked;
-  const reason = disablePruefung
-    ? `Es sind noch ${offen} von ${total} Belegen offen. Bitte alle buchen.`
-    : undefined;
-
+export function StatusTransitionWithFortschritt({ buchhaltungId, currentStatus, rolle, onStatusChanged }: Props) {
   return (
     <StatusTransition
       buchhaltungId={buchhaltungId}
       currentStatus={currentStatus}
       rolle={rolle}
       onStatusChanged={onStatusChanged}
-      disablePruefung={disablePruefung}
-      disablePruefungReason={reason}
     />
   );
 }
