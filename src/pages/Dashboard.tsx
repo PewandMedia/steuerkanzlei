@@ -803,7 +803,7 @@ export default function Dashboard() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-wrap items-center gap-1 min-w-[260px]">
+                      <div className="flex flex-wrap items-center gap-1 min-w-[200px]">
                         <WhatsAppButton
                           telefon={b.mandant?.telefon}
                           mandantName={b.mandant?.firma || b.mandant?.name}
