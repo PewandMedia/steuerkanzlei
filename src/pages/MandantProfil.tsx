@@ -395,17 +395,8 @@ export default function MandantProfil() {
                           dokumenteCount={b.dokumente_count}
                           onChanged={fetchAll}
                         />
-                        <div className="mt-1.5">
-                          <BuchhaltungsPaketDialog
-                            buchhaltungId={b.id}
-                            status={b.status}
-                            monat={b.monat}
-                            mandantName={mandant.name}
-                            hatAbschluss={b.hat_abschluss}
-                            onChanged={fetchAll}
-                          />
-                        </div>
                       </TableCell>
+
                       <TableCell>{b.bearbeiter?.name ?? "–"}</TableCell>
                       <TableCell className="hidden xl:table-cell">{b.belegeingang_datum ?? "–"}</TableCell>
                       <TableCell>
