@@ -359,7 +359,7 @@ export default function Dashboard() {
   }, [filtered, belegRang]);
 
   return (
-    <div className="p-6 lg:p-10 space-y-6 min-w-0">
+    <div className="p-4 lg:p-6 xl:p-8 space-y-6 min-w-0">
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
