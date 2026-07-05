@@ -434,31 +434,16 @@ export default function MandantProfil() {
                     </TableRow>
                     {expandedId === b.id && (
                       <TableRow key={b.id + "-expand"} className="bg-muted/20 hover:bg-muted/20">
-                        <TableCell colSpan={8} className="p-4 space-y-4">
-                          {b.dokumente_count > 0 && (
-                            <BuchungsFortschritt buchhaltungId={b.id} />
-                          )}
-                          <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Buchungen</p>
-                            <BuchungenListe
-                              buchhaltungId={b.id}
-                              mandantId={mandant?.id ?? ""}
-                              mandantName={mandant?.name ?? "Mandant"}
-                              monat={b.monat}
-                              onChanged={() => { fetchAll(); setSteuerRefreshKey((k) => k + 1); }}
-                            />
-                          </div>
-                          <BuchhaltungsPaket
-                            buchhaltungId={b.id}
-                            status={b.status}
-                            monat={b.monat}
-                            mandantName={mandant?.firma || mandant?.name || "Mandant"}
-                            refreshKey={steuerRefreshKey}
-                            onChanged={() => { fetchAll(); setSteuerRefreshKey((k) => k + 1); }}
-                          />
+                        <TableCell colSpan={8} className="p-4">
+                          <p className="text-sm text-muted-foreground">
+                            {b.notizen
+                              ? <>Notiz: <span className="text-foreground">{b.notizen}</span></>
+                              : "Keine zusätzlichen Notizen zu dieser Buchhaltung."}
+                          </p>
                         </TableCell>
                       </TableRow>
                     )}
+
                   </Fragment>
                 ))
               )}
