@@ -467,14 +467,6 @@ export default function Dashboard() {
             <SelectItem value="monat">Dieser Monat</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={modusFilter} onValueChange={(v) => setModusFilter(v as typeof modusFilter)}>
-          <SelectTrigger className="h-9 w-[160px]"><SelectValue placeholder="Modus" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle Modi</SelectItem>
-            <SelectItem value="weiterleitung">Nur Weiterleitung</SelectItem>
-            <SelectItem value="automatisierung">Automatisierung</SelectItem>
-          </SelectContent>
-        </Select>
         <Input
           className="h-9 w-[130px]"
           placeholder="Monat z.B. 01-2026"
