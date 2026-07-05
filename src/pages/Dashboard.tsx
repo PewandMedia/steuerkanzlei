@@ -524,21 +524,20 @@ export default function Dashboard() {
           <Table className="table-modern">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[180px]">Buchhaltung</TableHead>
-                <TableHead className="min-w-[260px]">Mandant</TableHead>
+                <TableHead className="min-w-[220px]">Mandant</TableHead>
                 <TableHead>Monat</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Frist</TableHead>
                 <TableHead>Belege</TableHead>
                 <TableHead>Bearbeiter</TableHead>
-                <TableHead className="hidden xl:table-cell">Belegeingang</TableHead>
-                <TableHead className="min-w-[240px]">Aktionen</TableHead>
+                <TableHead className="hidden 2xl:table-cell">Belegeingang</TableHead>
+                <TableHead className="min-w-[200px]">Aktionen</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-12">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-12">
                     <Inbox className="h-10 w-10 mx-auto mb-3 opacity-30" />
                     <p className="font-medium">Keine Buchhaltungen vorhanden</p>
                     <p className="text-sm">
