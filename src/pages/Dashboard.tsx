@@ -563,21 +563,6 @@ export default function Dashboard() {
                     ref={setRef(b.id) as any}
                     className={[rowCls, highlightId === b.id ? "focus-row-highlight" : ""].filter(Boolean).join(" ")}
                   >
-                    <TableCell className="w-[180px] p-2">
-                      <Button
-                        variant={b.hat_abschluss ? "default" : "outline"}
-                        size="sm"
-                        className={b.hat_abschluss ? "bg-green-600 hover:bg-green-700 text-white w-full" : "w-full"}
-                        onClick={() => setExpandedId(expandedId === b.id ? null : b.id)}
-                      >
-                        {b.hat_abschluss ? (
-                          <><FileSpreadsheet className="h-3.5 w-3.5 mr-1.5" /> Buchhaltung</>
-                        ) : (
-                          <><FileSpreadsheet className="h-3.5 w-3.5 mr-1.5" /> Anzeigen</>
-                        )}
-                        {expandedId === b.id ? <ChevronDown className="h-3.5 w-3.5 ml-1" /> : <ChevronRight className="h-3.5 w-3.5 ml-1" />}
-                      </Button>
-                    </TableCell>
                     <TableCell className="font-medium min-w-[260px] align-top">
                       <div className="flex flex-wrap items-center gap-1.5">
                         {istNaechster && (
