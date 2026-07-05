@@ -770,22 +770,14 @@ export default function Dashboard() {
                           mandantName={b.mandant?.name ?? "–"}
                           monat={b.monat}
                           dokumenteCount={b.dokumente_count}
-                          autoStartBuchen={b.automatisierung_aktiv && (b.status === "In Bearbeitung" || b.status === "Eingegangen")}
                           onChanged={fetchData}
                         />
-                        {b.automatisierung_aktiv ? (
-                          b.dokumente_count > 0 && (
-                            <>
-                              <BuchungsFortschritt buchhaltungId={b.id} variant="compact" />
-                            </>
-                          )
-                        ) : (
-                          b.dokumente_count > 0 && (
-                            <p className="text-[10px] text-muted-foreground italic">Belege als Referenz</p>
-                          )
+                        {b.dokumente_count > 0 && (
+                          <p className="text-[10px] text-muted-foreground italic">Belege als Referenz</p>
                         )}
                       </div>
                     </TableCell>
+
                     <TableCell>
                       <div className="flex flex-col gap-1">
                         <span>{b.bearbeiter?.name ?? "–"}</span>
