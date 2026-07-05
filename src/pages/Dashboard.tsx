@@ -54,16 +54,14 @@ interface BuchhaltungRow {
   bearbeiter_id: string;
   mandant_id: string;
   dokumente_count: number;
-  hat_abschluss: boolean;
   dauerfristverlaengerung: boolean;
   faellig_am_manuell: boolean;
-  automatisierung_aktiv: boolean;
   zurueckgewiesen_am: string | null;
   co_bearbeiter: { id: string; name: string }[];
-  dokumente_ocr_done: number;
   belegeingaenge: { id: string; datum: string; notiz: string | null }[];
   gruppen_id: string | null;
 }
+
 
 export default function Dashboard() {
   usePageMeta("Dashboard", "Übersicht aller offenen Buchhaltungen, Fristen und Prioritäten.");
