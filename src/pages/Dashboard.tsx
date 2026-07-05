@@ -162,7 +162,8 @@ export default function Dashboard() {
   };
 
   useEffect(() => { fetchData(); }, []);
-  useEffect(() => { if (rolle === "Sekretariat") fetchMandanten(); }, [rolle]);
+  useEffect(() => { fetchMandanten(); }, []);
+
 
   const bearbeiterList = useMemo(() => {
     const names = new Set<string>();
@@ -364,13 +365,15 @@ export default function Dashboard() {
   return (
     <div className="p-6 lg:p-10 space-y-6 min-w-0">
       {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
           <p className="section-label">Übersicht</p>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground mt-1">Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-1">Alle offenen Buchhaltungen, Fristen und Prioritäten auf einen Blick.</p>
         </div>
+        <NeueBuchhaltungDialog mandanten={mandanten} onCreated={fetchData} />
       </div>
+
 
       {/* Stats — clickable */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
