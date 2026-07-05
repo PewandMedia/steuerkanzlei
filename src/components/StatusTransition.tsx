@@ -64,48 +64,10 @@ export function StatusTransition({ buchhaltungId, currentStatus, rolle, onStatus
     if (error) {
       toast({ title: "Fehler", description: error.message, variant: "destructive" });
     } else {
-      // Den Abschluss-Status immer mit dem Hauptstatus synchron halten,
-      // damit überall dieselbe Erledigt-Logik gilt.
-      if (newStatus === "Buchhaltung erledigt") {
-        try {
-          const benutzerRes = await supabase.auth.getUser();
-          const userId = benutzerRes.data.user?.id;
-          let benutzerId: string | null = null;
-          if (userId) {
-            const { data: b } = await supabase
-              .from("benutzer")
-              .select("id")
-              .eq("user_id", userId)
-              .maybeSingle();
-            benutzerId = b?.id ?? null;
-          }
-          await supabase
-            .from("buchhaltungs_abschluesse")
-            .update({
-              freigegeben_am: erledigtZeitpunkt,
-              freigegeben_von: benutzerId,
-            })
-            .eq("buchhaltung_id", buchhaltungId)
-            .is("freigegeben_am", null);
-        } catch {
-          // nicht kritisch
-        }
-      } else {
-        try {
-          await supabase
-            .from("buchhaltungs_abschluesse")
-            .update({
-              freigegeben_am: null,
-              freigegeben_von: null,
-            })
-            .eq("buchhaltung_id", buchhaltungId);
-        } catch {
-          // nicht kritisch
-        }
-      }
       toast({ title: "Status geändert", description: `Neuer Status: ${newStatus}` });
       onStatusChanged();
     }
+
     setLoading(false);
     setShowNoteDialog(false);
     setNote("");
