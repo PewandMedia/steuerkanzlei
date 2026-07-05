@@ -4,7 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useAuth } from "@/hooks/use-auth";
 import { StatusBadge } from "@/components/StatusBadge";
 import { StatusTransitionWithFortschritt } from "@/components/StatusTransitionWithFortschritt";
-import { BuchungsFortschritt } from "@/components/BuchungsFortschritt";
+
 import { DeadlineIndicator } from "@/components/DeadlineIndicator";
 import { BelegeVollansicht } from "@/components/BelegeVollansicht";
 import { NeueBuchhaltungDialog } from "@/components/NeueBuchhaltungDialog";
@@ -18,7 +18,7 @@ import { Constants } from "@/integrations/supabase/types";
 import type { Database } from "@/integrations/supabase/types";
 import { FileText, Clock, AlertTriangle, CheckCircle, AlertOctagon, Inbox, MoreHorizontal, Pencil, Trash2, MessageSquare, PhoneCall, ChevronDown, ChevronRight, FileSpreadsheet, PlayCircle, Search, Flame, Star, Send, X, Briefcase, ClipboardCheck, Loader2 } from "lucide-react";
 import { Sparkles, Forward } from "lucide-react";
-import { BuchhaltungsPaketDialog } from "@/components/BuchhaltungsPaketDialog";
+
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -55,15 +55,15 @@ interface BuchhaltungRow {
   mandant_id: string;
   dokumente_count: number;
   hat_abschluss: boolean;
+
   dauerfristverlaengerung: boolean;
   faellig_am_manuell: boolean;
-  automatisierung_aktiv: boolean;
   zurueckgewiesen_am: string | null;
   co_bearbeiter: { id: string; name: string }[];
-  dokumente_ocr_done: number;
   belegeingaenge: { id: string; datum: string; notiz: string | null }[];
   gruppen_id: string | null;
 }
+
 
 export default function Dashboard() {
   usePageMeta("Dashboard", "Übersicht aller offenen Buchhaltungen, Fristen und Prioritäten.");
@@ -75,7 +75,7 @@ export default function Dashboard() {
   const [bearbeiterFilter, setBearbeiterFilter] = useState<string>("all");
   const [monatFilter, setMonatFilter] = useState("");
   const [fristFilter, setFristFilter] = useState<"all" | "ueberfaellig" | "woche" | "monat">("all");
-  const [modusFilter, setModusFilter] = useState<"all" | "weiterleitung" | "automatisierung">("all");
+  // modusFilter entfernt — kein Automatisierungsmodus mehr
   const [suche, setSuche] = useState("");
   const [sortierung, setSortierung] = useState<"prioritaet" | "frist" | "mandant" | "erstellt">("prioritaet");
   const [nurMeine, setNurMeine] = useState(false);
@@ -98,7 +98,7 @@ export default function Dashboard() {
       data = await fetchAll<any>((from, to) =>
         supabase
           .from("buchhaltungen")
-          .select("id, monat, status, belegeingang_datum, fertiggestellt_datum, abgabe_datum, faellig_am, faellig_am_manuell, dauerfristverlaengerung, automatisierung_aktiv, zurueckgewiesen_am, notizen, bearbeiter_id, mandant_id, gruppen_id, mandant:mandanten(id, mandanten_nummer, name, firma, telefon, email), bearbeiter:benutzer!buchhaltungen_bearbeiter_id_fkey(name), buchhaltung_dokumente(id, ocr_status), buchhaltungs_abschluesse(id), co:buchhaltung_co_bearbeiter(bearbeiter:benutzer!buchhaltung_co_bearbeiter_bearbeiter_id_fkey(id, name)), belegeingaenge(id, datum, notiz)")
+          .select("id, monat, status, belegeingang_datum, fertiggestellt_datum, abgabe_datum, faellig_am, faellig_am_manuell, dauerfristverlaengerung, zurueckgewiesen_am, notizen, bearbeiter_id, mandant_id, gruppen_id, mandant:mandanten(id, mandanten_nummer, name, firma, telefon, email), bearbeiter:benutzer!buchhaltungen_bearbeiter_id_fkey(name), buchhaltung_dokumente(id), co:buchhaltung_co_bearbeiter(bearbeiter:benutzer!buchhaltung_co_bearbeiter_bearbeiter_id_fkey(id, name)), belegeingaenge(id, datum, notiz)")
           .order("erstellt_am", { ascending: false })
           .order("id", { ascending: true })
           .range(from, to) as any,
@@ -120,7 +120,9 @@ export default function Dashboard() {
         faellig_am: d.faellig_am,
         faellig_am_manuell: !!d.faellig_am_manuell,
         dauerfristverlaengerung: !!d.dauerfristverlaengerung,
-        automatisierung_aktiv: !!d.automatisierung_aktiv,
+        hat_abschluss: d.status === "Buchhaltung erledigt",
+
+        
         zurueckgewiesen_am: d.zurueckgewiesen_am ?? null,
         notizen: d.notizen,
         bearbeiter_id: d.bearbeiter_id,
@@ -128,8 +130,6 @@ export default function Dashboard() {
         mandant: d.mandant,
         bearbeiter: d.bearbeiter,
         dokumente_count: docs.length,
-        dokumente_ocr_done: docs.filter((x: any) => x.ocr_status === "done").length,
-        hat_abschluss: Array.isArray(d.buchhaltungs_abschluesse) && d.buchhaltungs_abschluesse.length > 0,
         co_bearbeiter: Array.isArray(d.co)
           ? d.co.map((c: any) => c.bearbeiter).filter(Boolean)
           : [],
@@ -176,8 +176,6 @@ export default function Dashboard() {
     const result = buchhaltungen.filter((b) => {
       if (statusFilter !== "all" && b.status !== statusFilter) return false;
       if (bearbeiterFilter !== "all" && b.bearbeiter?.name !== bearbeiterFilter) return false;
-      if (modusFilter === "weiterleitung" && b.automatisierung_aktiv) return false;
-      if (modusFilter === "automatisierung" && !b.automatisierung_aktiv) return false;
       if (monatFilter && !b.monat.toLowerCase().includes(monatFilter.toLowerCase())) return false;
       if (nurMeine && benutzerId) {
         const istHaupt = b.bearbeiter_id === benutzerId;
@@ -234,7 +232,7 @@ export default function Dashboard() {
   }, [buchhaltungen, statusFilter, bearbeiterFilter, monatFilter, fristFilter, suche, sortierung, nurMeine, benutzerId]);
 
   // Pagination — initial 10, weitere per Button / Auto-Load on Scroll
-  const paginationKey = `${statusFilter}|${bearbeiterFilter}|${monatFilter}|${fristFilter}|${modusFilter}|${suche}|${sortierung}|${nurMeine}`;
+  const paginationKey = `${statusFilter}|${bearbeiterFilter}|${monatFilter}|${fristFilter}|${suche}|${sortierung}|${nurMeine}`;
   const [pageSize, setPageSize] = usePageSize("pageSize:dashboard");
   const { visible: visibleRows, page, totalPages, goToPage, total: totalRows, shown: shownRows } =
     usePaginatedList(filtered, pageSize, paginationKey);
@@ -250,7 +248,6 @@ export default function Dashboard() {
     setStatusFilter("all");
     setBearbeiterFilter("all");
     setFristFilter("all");
-    setModusFilter("all");
     setMonatFilter("");
     setSuche("");
     setNurMeine(false);
@@ -294,14 +291,13 @@ export default function Dashboard() {
     return map;
   }, [buchhaltungen]);
 
-  const istFilterAktiv = statusFilter !== "all" || bearbeiterFilter !== "all" || monatFilter !== "" || fristFilter !== "all" || suche !== "" || modusFilter !== "all";
+  const istFilterAktiv = statusFilter !== "all" || bearbeiterFilter !== "all" || monatFilter !== "" || fristFilter !== "all" || suche !== "";
   const resetFilter = () => {
     setStatusFilter("all");
     setBearbeiterFilter("all");
     setMonatFilter("");
     setFristFilter("all");
     setSuche("");
-    setModusFilter("all");
   };
 
   // Erste Zeile als "Als Nächstes" highlighten — außer wenn nur Erledigte da sind
@@ -473,14 +469,6 @@ export default function Dashboard() {
             <SelectItem value="ueberfaellig">Überfällig</SelectItem>
             <SelectItem value="woche">Diese Woche</SelectItem>
             <SelectItem value="monat">Dieser Monat</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={modusFilter} onValueChange={(v) => setModusFilter(v as typeof modusFilter)}>
-          <SelectTrigger className="h-9 w-[160px]"><SelectValue placeholder="Modus" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle Modi</SelectItem>
-            <SelectItem value="weiterleitung">Nur Weiterleitung</SelectItem>
-            <SelectItem value="automatisierung">Automatisierung</SelectItem>
           </SelectContent>
         </Select>
         <Input
@@ -678,21 +666,13 @@ export default function Dashboard() {
                         {b.mandant?.firma && <span className="text-muted-foreground text-xs ml-1">({b.mandant.firma})</span>}
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-1">
-                        {b.automatisierung_aktiv ? (
-                          <Badge variant="outline" className="gap-1 text-[10px] h-5 border-primary/40 text-primary bg-primary/5">
-                            <Sparkles className="h-2.5 w-2.5" /> Automatisierung
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="gap-1 text-[10px] h-5 text-muted-foreground">
-                            <Forward className="h-2.5 w-2.5" /> Nur Weiterleitung
-                          </Badge>
-                        )}
                         {b.zurueckgewiesen_am && b.status === "In Bearbeitung" && (
                           <Badge variant="destructive" className="gap-1 text-[10px] h-5">
                             <AlertOctagon className="h-2.5 w-2.5" /> Vom Chef zurückgewiesen
                           </Badge>
                         )}
                       </div>
+
                       {b.zurueckgewiesen_am && b.status === "In Bearbeitung" && b.notizen && (
                         <div className="mt-2 block w-full rounded-md border border-destructive/40 bg-destructive/5 px-2 py-1.5">
                           <p className="text-[10px] font-semibold uppercase tracking-wide text-destructive flex items-center gap-1">
@@ -790,22 +770,14 @@ export default function Dashboard() {
                           mandantName={b.mandant?.name ?? "–"}
                           monat={b.monat}
                           dokumenteCount={b.dokumente_count}
-                          autoStartBuchen={b.automatisierung_aktiv && (b.status === "In Bearbeitung" || b.status === "Eingegangen")}
                           onChanged={fetchData}
                         />
-                        {b.automatisierung_aktiv ? (
-                          b.dokumente_count > 0 && (
-                            <>
-                              <BuchungsFortschritt buchhaltungId={b.id} variant="compact" />
-                            </>
-                          )
-                        ) : (
-                          b.dokumente_count > 0 && (
-                            <p className="text-[10px] text-muted-foreground italic">Belege als Referenz</p>
-                          )
+                        {b.dokumente_count > 0 && (
+                          <p className="text-[10px] text-muted-foreground italic">Belege als Referenz</p>
                         )}
                       </div>
                     </TableCell>
+
                     <TableCell>
                       <div className="flex flex-col gap-1">
                         <span>{b.bearbeiter?.name ?? "–"}</span>
@@ -858,19 +830,9 @@ export default function Dashboard() {
                             currentStatus={b.status}
                             rolle={rolle}
                             onStatusChanged={fetchData}
-                            automatisierungAktiv={b.automatisierung_aktiv}
                           />
                         )}
-                        {b.automatisierung_aktiv && (
-                          <BuchhaltungsPaketDialog
-                            buchhaltungId={b.id}
-                            status={b.status}
-                            monat={b.monat}
-                            mandantName={b.mandant?.firma || b.mandant?.name || "–"}
-                            hatAbschluss={b.hat_abschluss}
-                            onChanged={fetchData}
-                          />
-                        )}
+
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -916,22 +878,16 @@ export default function Dashboard() {
                             </div>
                           </div>
                         )}
-                        {b.automatisierung_aktiv ? (
+                        <div className="space-y-1">
                           <div className="text-sm text-muted-foreground italic flex items-center gap-2">
-                            <Sparkles className="h-4 w-4 text-primary" />
-                            Automatisierung aktiv — KI-Belegerkennung und Buchhaltungs-Paket finden Sie direkt in den Spalten „Belege" und „Aktionen" dieser Zeile.
+                            <Forward className="h-4 w-4" />
+                            Weiterleitung & Organisation — Belege dienen als Referenz. Die Buchhaltung wird extern bearbeitet.
                           </div>
-                        ) : (
-                          <div className="space-y-1">
-                            <div className="text-sm text-muted-foreground italic flex items-center gap-2">
-                              <Forward className="h-4 w-4" />
-                              Nur Weiterleitung — Belege dienen als Hinweis. Bearbeiten Sie diese Buchhaltung extern.
-                            </div>
-                            <p className="text-xs text-muted-foreground pl-6">
-                              Status hier ändern → <strong>Annehmen</strong>, <strong>Warten auf Mandant</strong>, <strong>Zur Prüfung senden</strong>, <strong>Erledigt</strong>.
-                            </p>
-                          </div>
-                        )}
+                          <p className="text-xs text-muted-foreground pl-6">
+                            Status hier ändern → <strong>Annehmen</strong>, <strong>Warten auf Mandant</strong>, <strong>Zur Prüfung senden</strong>, <strong>Erledigt</strong>.
+                          </p>
+                        </div>
+
                       </TableCell>
                     </TableRow>
                   )}
@@ -966,7 +922,6 @@ export default function Dashboard() {
             ...editingBuchhaltung,
             dauerfristverlaengerung: editingBuchhaltung.dauerfristverlaengerung,
             faellig_am_manuell: editingBuchhaltung.faellig_am_manuell,
-            automatisierung_aktiv: editingBuchhaltung.automatisierung_aktiv,
           }}
           onSaved={fetchData}
         />

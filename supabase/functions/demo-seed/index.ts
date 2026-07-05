@@ -145,7 +145,6 @@ Deno.serve(async (req) => {
     ];
 
     let insertedBh = 0;
-    let insertedBu = 0;
     for (let mi = 0; mi < mandantenIds.length; mi++) {
       const mid = mandantenIds[mi];
       for (let i = 0; i < monate.length; i++) {
@@ -155,25 +154,27 @@ Deno.serve(async (req) => {
         else if (i === 3) status = statuses[(mi + 1) % statuses.length];
         else status = statuses[(mi + 3) % statuses.length];
 
-        // one special case: mandant 0 gets a "zurückgewiesen" (In Bearbeitung + zurueckgewiesen_am)
         const zurueckgewiesen = mi === 0 && i === 4;
         if (zurueckgewiesen) status = "In Bearbeitung";
+
+        const [mm, yyyy] = monate[i].split("-");
+        const fertiggestellt = status === "Buchhaltung erledigt" ? `${yyyy}-${mm}-28` : null;
 
         const { data: bh, error: bhErr } = await svc.from("buchhaltungen").insert({
           mandant_id: mid,
           bearbeiter_id: sachbearbeiterBid,
           monat: monate[i],
           status,
+          fertiggestellt_datum: fertiggestellt,
           notizen: status === "In Bearbeitung" && zurueckgewiesen
-            ? "Bitte Buchung Nr. 3 korrigieren - falscher Konto."
+            ? "Bitte den Umsatz-Beleg aus KW 3 nachreichen — fehlt in den Unterlagen."
             : null,
           zurueckgewiesen_am: zurueckgewiesen ? new Date().toISOString() : null,
         }).select("id").single();
         if (bhErr) return j(500, { step: "insertBH", error: bhErr.message });
         insertedBh++;
 
-        // Belegeingänge
-        const [mm, yyyy] = monate[i].split("-");
+        // Belegeingänge — als Referenz-Dokumentation
         const belege = [
           { datum: `${yyyy}-${mm}-05`, notiz: "Kontoauszug + Rechnungen per E-Mail" },
           { datum: `${yyyy}-${mm}-15`, notiz: "Kassenbelege abgegeben" },
@@ -184,54 +185,16 @@ Deno.serve(async (req) => {
           });
         }
 
-        // Buchungen (only for erledigt / in prüfung / in bearbeitung)
-        if (status !== "Warten auf Mandant" && status !== "Eingegangen") {
-          const buchungen = [
-            { betrag: 1250.00, kategorie: "Umsatz", konto: "8400", beschreibung: "Verkaufserlöse", lieferant: "Diverse Kunden", mwst_satz: 19 },
-            { betrag: -180.50, kategorie: "Wareneinkauf", konto: "3300", beschreibung: "Materialeinkauf", lieferant: "Großhandel Nord", mwst_satz: 19 },
-            { betrag: -420.00, kategorie: "Miete", konto: "4210", beschreibung: "Ladenmiete", lieferant: "Immobilien GmbH", mwst_satz: 0 },
-            { betrag: -85.20, kategorie: "Telefon/Internet", konto: "4920", beschreibung: "Telekom Rechnung", lieferant: "Telekom", mwst_satz: 19 },
-            { betrag: -55.00, kategorie: "Bürobedarf", konto: "4930", beschreibung: "Druckerpapier & Toner", lieferant: "Office World", mwst_satz: 19 },
-          ];
-          for (const bu of buchungen) {
-            await svc.from("buchungen").insert({
-              buchhaltung_id: bh.id,
-              mandant_id: mid,
-              betrag: bu.betrag,
-              buchungsdatum: `${yyyy}-${mm}-${String(Math.floor(Math.random() * 25) + 1).padStart(2, "0")}`,
-              kategorie: bu.kategorie,
-              konto: bu.konto,
-              beschreibung: bu.beschreibung,
-              lieferant: bu.lieferant,
-              mwst_satz: bu.mwst_satz,
-              erstellt_von: sachbearbeiterBid,
-            });
-            insertedBu++;
-          }
-        }
-
-        // Abschluss for erledigt
-        if (status === "Buchhaltung erledigt") {
-          await svc.from("buchhaltungs_abschluesse").insert({
-            buchhaltung_id: bh.id,
-            erstellt_von: sachbearbeiterBid,
-            ustva_kennziffern: { "81": 1250, "66": 32.40 },
-            susa_data: { konten: [] },
-            journal_data: [],
-            freigegeben_am: new Date().toISOString(),
-            freigegeben_von: chefBid,
-          });
-        }
-
-        // A couple of kommentare on non-erledigt
+        // Kommentare für "In Prüfung"
         if (status === "In Prüfung") {
           await svc.from("kommentare").insert({
             buchhaltung_id: bh.id, user_id: userIds["Sachbearbeiter"],
-            kommentar: "Alle Belege verbucht, bereit zur Prüfung.",
+            kommentar: "Belege sind komplett — bitte prüfen und freigeben.",
           });
         }
       }
     }
+
 
     // Benachrichtigung an chef & sekretariat als Beispiel
     await svc.from("benachrichtigungen").insert([
@@ -246,8 +209,8 @@ Deno.serve(async (req) => {
       users: userIds,
       mandanten: mandantenIds.length,
       buchhaltungen: insertedBh,
-      buchungen: insertedBu,
     });
+
   } catch (e) {
     console.error("demo-seed error", e);
     return j(500, { error: (e as Error).message });

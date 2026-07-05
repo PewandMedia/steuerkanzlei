@@ -27,7 +27,7 @@ interface Props {
     mandant_id?: string;
     dauerfristverlaengerung?: boolean;
     faellig_am_manuell?: boolean;
-    automatisierung_aktiv?: boolean;
+    
   };
   onSaved: () => void;
 }
@@ -43,7 +43,7 @@ export function BuchhaltungBearbeitenDialog({ open, onOpenChange, buchhaltung, o
   const [alsCoBehalten, setAlsCoBehalten] = useState(true);
   const [sachbearbeiter, setSachbearbeiter] = useState<{ id: string; name: string }[]>([]);
   const [dfv, setDfv] = useState<boolean>(buchhaltung.dauerfristverlaengerung ?? false);
-  const [automatisierungAktiv, setAutomatisierungAktiv] = useState<boolean>(buchhaltung.automatisierung_aktiv ?? false);
+  
   const [coBearbeiter, setCoBearbeiter] = useState<{ id: string; name: string }[]>([]);
   const [neuerCoId, setNeuerCoId] = useState<string>("");
   const [belegeingaenge, setBelegeingaenge] = useState<BelegeingangEntry[]>([]);
@@ -114,7 +114,7 @@ export function BuchhaltungBearbeitenDialog({ open, onOpenChange, buchhaltung, o
       faellig_am: faelligAm || null,
       notizen: notizen || null,
       dauerfristverlaengerung: dfv,
-      automatisierung_aktiv: automatisierungAktiv,
+
     };
     // Wurde die Frist manuell verändert? Dann Manuell-Flag setzen.
     if (faelligAm && faelligAm !== initialFaelligAm) {
@@ -250,20 +250,6 @@ export function BuchhaltungBearbeitenDialog({ open, onOpenChange, buchhaltung, o
               <p className="text-xs text-muted-foreground">Frist wird automatisch um 1 Monat verlängert</p>
             </div>
             <Switch checked={dfv} onCheckedChange={setDfv} />
-          </div>
-          <div className="flex items-center justify-between rounded-md border p-3">
-            <div className="pr-3">
-              <Label className="cursor-pointer">Automatisierung (OCR &amp; Buchhaltungs-Paket)</Label>
-              <p className="text-xs text-muted-foreground">
-                Aktiv: KI-Belegerkennung, Buchungserfassung und UStVA-Paket sind verfügbar.
-                Inaktiv: nur Belegweiterleitung – Sachbearbeiter ändert lediglich den Status.
-              </p>
-            </div>
-            <Switch
-              checked={automatisierungAktiv}
-              onCheckedChange={setAutomatisierungAktiv}
-              disabled={!darfModusAendern}
-            />
           </div>
           <div className="space-y-1">
             <Label>Fällig am</Label>

@@ -67,7 +67,6 @@ export function NeueBuchhaltungDialog({ mandanten, onCreated, preselectedMandant
   const [dfvOverride, setDfvOverride] = useState<boolean | null>(null);
   const today = new Date().toISOString().split("T")[0];
   const [belegeingaenge, setBelegeingaenge] = useState<BelegeingangEntry[]>([{ datum: today, notiz: "" }]);
-  const [automatisierungAktiv, setAutomatisierungAktiv] = useState<boolean>(false);
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -236,7 +235,6 @@ export function NeueBuchhaltungDialog({ mandanten, onCreated, preselectedMandant
     setLastAuto("");
     setDfvOverride(null);
     setBelegeingaenge([{ datum: new Date().toISOString().split("T")[0], notiz: "" }]);
-    setAutomatisierungAktiv(false);
     setFiles([]);
     setProgress(0);
     setNotiz("");
@@ -278,7 +276,6 @@ export function NeueBuchhaltungDialog({ mandanten, onCreated, preselectedMandant
         status: "Eingegangen",
         belegeingang_datum: earliest,
         dauerfristverlaengerung: dfvAktiv,
-        automatisierung_aktiv: automatisierungAktiv,
       };
       if (gruppenId) insertData.gruppen_id = gruppenId;
       // Manuelle Frist nur bei einzelnem Monat; sonst Auto-Frist pro Monat (Trigger füllt sie, aber wir setzen sie hier explizit für sofortige Anzeige).
@@ -662,38 +659,6 @@ export function NeueBuchhaltungDialog({ mandanten, onCreated, preselectedMandant
 
           <Separator />
 
-          {/* Section 5: Belege */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-semibold">5</span>
-              <Label className="text-sm font-semibold">Bearbeitungsmodus</Label>
-            </div>
-            <div className="pl-8">
-              <label className={cn(
-                "flex items-start gap-2 cursor-pointer rounded-md border p-3 transition-colors",
-                automatisierungAktiv ? "border-primary/60 bg-primary/5" : "hover:bg-muted/40"
-              )}>
-                <Checkbox
-                  checked={automatisierungAktiv}
-                  onCheckedChange={(v) => setAutomatisierungAktiv(v === true)}
-                  disabled={uploading}
-                  className="mt-0.5"
-                />
-                <div className="space-y-0.5">
-                  <span className="text-sm font-medium leading-none flex items-center gap-1.5">
-                    <Sparkles className="h-3.5 w-3.5 text-primary" />
-                    Automatisierung nutzen (OCR &amp; Buchhaltungs-Paket)
-                  </span>
-                  <p className="text-[11px] text-muted-foreground">
-                    Wenn aktiviert: Belege werden automatisch ausgelesen, gebucht und ein UStVA-/Buchhaltungs-Paket erzeugt.
-                    Ohne Häkchen werden die Belege nur als <strong>Hinweis an den Sachbearbeiter weitergeleitet</strong> — er bearbeitet sie extern und ändert nur den Status.
-                  </p>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          <Separator />
 
           {/* Section 6: Belege */}
           <div className="space-y-3">

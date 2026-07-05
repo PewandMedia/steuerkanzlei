@@ -8,12 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { StatusBadge } from "@/components/StatusBadge";
 import { DeadlineIndicator } from "@/components/DeadlineIndicator";
 import { BelegeVollansicht } from "@/components/BelegeVollansicht";
-import { BuchhaltungsPaketDialog } from "@/components/BuchhaltungsPaketDialog";
-import { BuchungenListe } from "@/components/BuchungenListe";
 import { StatusTransitionWithFortschritt } from "@/components/StatusTransitionWithFortschritt";
-import { BuchungsFortschritt } from "@/components/BuchungsFortschritt";
-import { BuchhaltungsPaket } from "@/components/BuchhaltungsPaket";
 import { BuchhaltungBearbeitenDialog } from "@/components/BuchhaltungBearbeitenDialog";
+
 import { toast } from "@/hooks/use-toast";
 import { getDeadlineStatus } from "@/lib/deadline-utils";
 import { ArrowLeft, Building2, User, FileText, CheckCircle, Clock, AlertOctagon, MoreHorizontal, Pencil, Trash2, Mail, Phone, MapPin, Calendar, Hash, CreditCard, Briefcase, Plus, ChevronDown, ChevronRight, FileSpreadsheet } from "lucide-react";
@@ -116,7 +113,7 @@ export default function MandantProfil() {
       fetchAllRows<any>((from, to) =>
         supabase
           .from("buchhaltungen")
-          .select("id, monat, status, belegeingang_datum, fertiggestellt_datum, abgabe_datum, faellig_am, notizen, bearbeiter_id, bearbeiter:benutzer!buchhaltungen_bearbeiter_id_fkey(name), buchhaltung_dokumente(id), buchhaltungs_abschluesse(id)")
+          .select("id, monat, status, belegeingang_datum, fertiggestellt_datum, abgabe_datum, faellig_am, notizen, bearbeiter_id, bearbeiter:benutzer!buchhaltungen_bearbeiter_id_fkey(name), buchhaltung_dokumente(id)")
           .eq("mandant_id", id)
           .order("erstellt_am", { ascending: false })
           .order("id", { ascending: true })
@@ -138,7 +135,7 @@ export default function MandantProfil() {
         bearbeiter_id: d.bearbeiter_id,
         bearbeiter: d.bearbeiter,
         dokumente_count: Array.isArray(d.buchhaltung_dokumente) ? d.buchhaltung_dokumente.length : 0,
-        hat_abschluss: Array.isArray(d.buchhaltungs_abschluesse) && d.buchhaltungs_abschluesse.length > 0,
+        hat_abschluss: d.status === "Buchhaltung erledigt",
       }))
     );
     setLoading(false);
@@ -398,17 +395,8 @@ export default function MandantProfil() {
                           dokumenteCount={b.dokumente_count}
                           onChanged={fetchAll}
                         />
-                        <div className="mt-1.5">
-                          <BuchhaltungsPaketDialog
-                            buchhaltungId={b.id}
-                            status={b.status}
-                            monat={b.monat}
-                            mandantName={mandant.name}
-                            hatAbschluss={b.hat_abschluss}
-                            onChanged={fetchAll}
-                          />
-                        </div>
                       </TableCell>
+
                       <TableCell>{b.bearbeiter?.name ?? "–"}</TableCell>
                       <TableCell className="hidden xl:table-cell">{b.belegeingang_datum ?? "–"}</TableCell>
                       <TableCell>
@@ -446,31 +434,16 @@ export default function MandantProfil() {
                     </TableRow>
                     {expandedId === b.id && (
                       <TableRow key={b.id + "-expand"} className="bg-muted/20 hover:bg-muted/20">
-                        <TableCell colSpan={8} className="p-4 space-y-4">
-                          {b.dokumente_count > 0 && (
-                            <BuchungsFortschritt buchhaltungId={b.id} />
-                          )}
-                          <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Buchungen</p>
-                            <BuchungenListe
-                              buchhaltungId={b.id}
-                              mandantId={mandant?.id ?? ""}
-                              mandantName={mandant?.name ?? "Mandant"}
-                              monat={b.monat}
-                              onChanged={() => { fetchAll(); setSteuerRefreshKey((k) => k + 1); }}
-                            />
-                          </div>
-                          <BuchhaltungsPaket
-                            buchhaltungId={b.id}
-                            status={b.status}
-                            monat={b.monat}
-                            mandantName={mandant?.firma || mandant?.name || "Mandant"}
-                            refreshKey={steuerRefreshKey}
-                            onChanged={() => { fetchAll(); setSteuerRefreshKey((k) => k + 1); }}
-                          />
+                        <TableCell colSpan={8} className="p-4">
+                          <p className="text-sm text-muted-foreground">
+                            {b.notizen
+                              ? <>Notiz: <span className="text-foreground">{b.notizen}</span></>
+                              : "Keine zusätzlichen Notizen zu dieser Buchhaltung."}
+                          </p>
                         </TableCell>
                       </TableRow>
                     )}
+
                   </Fragment>
                 ))
               )}
