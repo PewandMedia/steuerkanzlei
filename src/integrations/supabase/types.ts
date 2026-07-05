@@ -170,7 +170,6 @@ export type Database = {
           id: string
           ocr_am: string | null
           ocr_data: Json | null
-          ocr_status: string | null
         }
         Insert: {
           buchhaltung_id: string
@@ -181,7 +180,6 @@ export type Database = {
           id?: string
           ocr_am?: string | null
           ocr_data?: Json | null
-          ocr_status?: string | null
         }
         Update: {
           buchhaltung_id?: string
@@ -192,7 +190,6 @@ export type Database = {
           id?: string
           ocr_am?: string | null
           ocr_data?: Json | null
-          ocr_status?: string | null
         }
         Relationships: [
           {
@@ -214,7 +211,6 @@ export type Database = {
       buchhaltungen: {
         Row: {
           abgabe_datum: string | null
-          automatisierung_aktiv: boolean
           bearbeiter_id: string
           belegeingang_datum: string | null
           dauerfristverlaengerung: boolean
@@ -232,7 +228,6 @@ export type Database = {
         }
         Insert: {
           abgabe_datum?: string | null
-          automatisierung_aktiv?: boolean
           bearbeiter_id: string
           belegeingang_datum?: string | null
           dauerfristverlaengerung?: boolean
@@ -250,7 +245,6 @@ export type Database = {
         }
         Update: {
           abgabe_datum?: string | null
-          automatisierung_aktiv?: boolean
           bearbeiter_id?: string
           belegeingang_datum?: string | null
           dauerfristverlaengerung?: boolean
@@ -276,181 +270,6 @@ export type Database = {
           },
           {
             foreignKeyName: "buchhaltungen_mandant_id_fkey"
-            columns: ["mandant_id"]
-            isOneToOne: false
-            referencedRelation: "mandanten"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      buchhaltungs_abschluesse: {
-        Row: {
-          buchhaltung_id: string
-          erstellt_am: string
-          erstellt_von: string
-          finanzamt_eingereicht_am: string | null
-          finanzamt_referenz: string | null
-          freigegeben_am: string | null
-          freigegeben_von: string | null
-          id: string
-          journal_data: Json
-          journal_pdf_pfad: string | null
-          paket_pdf_pfad: string | null
-          steuerberater_geprueft_am: string | null
-          steuerberater_geprueft_von: string | null
-          steuerberater_notiz: string | null
-          susa_data: Json
-          susa_pdf_pfad: string | null
-          ustva_kennziffern: Json
-          ustva_pdf_pfad: string | null
-        }
-        Insert: {
-          buchhaltung_id: string
-          erstellt_am?: string
-          erstellt_von: string
-          finanzamt_eingereicht_am?: string | null
-          finanzamt_referenz?: string | null
-          freigegeben_am?: string | null
-          freigegeben_von?: string | null
-          id?: string
-          journal_data?: Json
-          journal_pdf_pfad?: string | null
-          paket_pdf_pfad?: string | null
-          steuerberater_geprueft_am?: string | null
-          steuerberater_geprueft_von?: string | null
-          steuerberater_notiz?: string | null
-          susa_data?: Json
-          susa_pdf_pfad?: string | null
-          ustva_kennziffern?: Json
-          ustva_pdf_pfad?: string | null
-        }
-        Update: {
-          buchhaltung_id?: string
-          erstellt_am?: string
-          erstellt_von?: string
-          finanzamt_eingereicht_am?: string | null
-          finanzamt_referenz?: string | null
-          freigegeben_am?: string | null
-          freigegeben_von?: string | null
-          id?: string
-          journal_data?: Json
-          journal_pdf_pfad?: string | null
-          paket_pdf_pfad?: string | null
-          steuerberater_geprueft_am?: string | null
-          steuerberater_geprueft_von?: string | null
-          steuerberater_notiz?: string | null
-          susa_data?: Json
-          susa_pdf_pfad?: string | null
-          ustva_kennziffern?: Json
-          ustva_pdf_pfad?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "buchhaltungs_abschluesse_buchhaltung_id_fkey"
-            columns: ["buchhaltung_id"]
-            isOneToOne: true
-            referencedRelation: "buchhaltungen"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "buchhaltungs_abschluesse_erstellt_von_fkey"
-            columns: ["erstellt_von"]
-            isOneToOne: false
-            referencedRelation: "benutzer"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "buchhaltungs_abschluesse_freigegeben_von_fkey"
-            columns: ["freigegeben_von"]
-            isOneToOne: false
-            referencedRelation: "benutzer"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      buchungen: {
-        Row: {
-          beschreibung: string
-          betrag: number
-          buchhaltung_id: string
-          buchungsdatum: string
-          dokument_id: string | null
-          erstellt_am: string
-          erstellt_von: string
-          geaendert_am: string | null
-          geaendert_von: string | null
-          id: string
-          kategorie: string
-          konto: string
-          lieferant: string | null
-          mandant_id: string
-          mwst_satz: number
-        }
-        Insert: {
-          beschreibung?: string
-          betrag: number
-          buchhaltung_id: string
-          buchungsdatum: string
-          dokument_id?: string | null
-          erstellt_am?: string
-          erstellt_von: string
-          geaendert_am?: string | null
-          geaendert_von?: string | null
-          id?: string
-          kategorie: string
-          konto: string
-          lieferant?: string | null
-          mandant_id: string
-          mwst_satz?: number
-        }
-        Update: {
-          beschreibung?: string
-          betrag?: number
-          buchhaltung_id?: string
-          buchungsdatum?: string
-          dokument_id?: string | null
-          erstellt_am?: string
-          erstellt_von?: string
-          geaendert_am?: string | null
-          geaendert_von?: string | null
-          id?: string
-          kategorie?: string
-          konto?: string
-          lieferant?: string | null
-          mandant_id?: string
-          mwst_satz?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "buchungen_buchhaltung_id_fkey"
-            columns: ["buchhaltung_id"]
-            isOneToOne: false
-            referencedRelation: "buchhaltungen"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "buchungen_dokument_id_fkey"
-            columns: ["dokument_id"]
-            isOneToOne: false
-            referencedRelation: "buchhaltung_dokumente"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "buchungen_erstellt_von_fkey"
-            columns: ["erstellt_von"]
-            isOneToOne: false
-            referencedRelation: "benutzer"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "buchungen_geaendert_von_fkey"
-            columns: ["geaendert_von"]
-            isOneToOne: false
-            referencedRelation: "benutzer"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "buchungen_mandant_id_fkey"
             columns: ["mandant_id"]
             isOneToOne: false
             referencedRelation: "mandanten"
