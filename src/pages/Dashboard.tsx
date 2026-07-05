@@ -83,7 +83,7 @@ export default function Dashboard() {
   const [editingBuchhaltung, setEditingBuchhaltung] = useState<BuchhaltungRow | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [kontaktBuchhaltung, setKontaktBuchhaltung] = useState<BuchhaltungRow | null>(null);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  // expandedId entfernt — keine Anzeigen-Spalte mehr
   const [belegeingaengeDialog, setBelegeingaengeDialog] = useState<BuchhaltungRow | null>(null);
   // ocr batch button removed
 
