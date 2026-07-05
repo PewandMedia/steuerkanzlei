@@ -16,7 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Constants } from "@/integrations/supabase/types";
 import type { Database } from "@/integrations/supabase/types";
-import { FileText, Clock, AlertTriangle, CheckCircle, AlertOctagon, Inbox, MoreHorizontal, Pencil, Trash2, MessageSquare, PhoneCall, ChevronDown, ChevronRight, FileSpreadsheet, PlayCircle, Search, Flame, Star, Send, X, Briefcase, ClipboardCheck, Loader2 } from "lucide-react";
+import { FileText, Clock, AlertTriangle, CheckCircle, AlertOctagon, Inbox, MoreHorizontal, Pencil, Trash2, MessageSquare, PhoneCall, FileSpreadsheet, Search, Flame, Star, Send, X, Briefcase, ClipboardCheck, Loader2 } from "lucide-react";
 import { Sparkles, Forward } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";

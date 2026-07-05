@@ -1,66 +1,32 @@
 ## Ziel
-OCR- und Buchhaltungs-Paket-Automatisierung komplett aus dem Produkt entfernen. TAXOM wird zur reinen **Weiterleitungs- & Organisations-App**: Belege eingehen, Status-Workflow, Kommentare. Die Seite **„Erstellte Buchhaltungen"** bleibt als Übersicht der abgeschlossenen Fälle erhalten – nur ohne PDF-Paket/ELSTER-Ansicht.
+Dashboard-Tabelle passt auf Laptop-Auflösungen (≥ 1280 px) ohne horizontales Scrollen. Die "Anzeigen"/"Buchhaltung"-Spalte fliegt raus — sie liefert im Weiterleitungs-Modell keinen Mehrwert und blockiert 180 px Breite.
 
-## 1. Was rausfliegt
+## Änderungen in `src/pages/Dashboard.tsx`
 
-**Komponenten (Dateien löschen):**
-- `src/components/BuchhaltungsPaket.tsx`
-- `src/components/BuchhaltungsPaketDialog.tsx`
-- `src/components/ElsterUebergabe.tsx`
-- `src/components/SteuerUebersicht.tsx`
-- `src/components/SteuerberaterPruefung.tsx`
-- `src/components/PdfVorschauTabs.tsx`
-- `src/components/BuchungsErfassung.tsx`
-- `src/components/BuchungenListe.tsx`
+1. **Spalte „Buchhaltung/Anzeigen" komplett entfernen**
+   - `TableHead` mit `w-[180px]` (Zeile 527) raus.
+   - Zugehörige `TableCell` mit dem Expand-Button (Zeile 566–580) raus.
+   - `expandedId`-State, die aufklappbare Details-Row (Zeile 867–893) und der Import von `ChevronDown/ChevronRight/PlayCircle` (nur hier genutzt) werden entfernt.
+   - `colSpan={9}` in der Leer-Zeile und Detail-Row auf `8` angepasst.
+   - Der "Buchhaltung erledigt"-Hinweis bleibt weiter über den Status-Badge in der Status-Spalte sichtbar (klickbar → `/buchhaltungen`), also kein Info-Verlust.
 
-**Libs:**
-- `src/lib/steuer-berechnung.ts`
-- `src/lib/elster-validierung.ts`
-- `src/lib/konten.ts`
-- `src/lib/buchungen-export.ts`
+2. **Aktionen-Spalte kompakter**
+   - `min-w-[240px]` auf `min-w-[200px]` und die innere `min-w-[260px]` auf `min-w-[200px]` reduzieren, damit die Zeile bei 1280–1440 px nicht mehr überläuft.
+   - `WhatsAppButton` bleibt, `StatusTransitionWithFortschritt` bleibt, `MoreHorizontal` bleibt.
 
-**Edge Functions:**
-- `supabase/functions/beleg-ocr/`
-- `supabase/functions/buchhaltung-abschliessen/`
+3. **Belegeingang-Spalte an mittlere Laptops anpassen**
+   - Breakpoint auf `hidden 2xl:table-cell` (≥ 1536 px) verschieben, damit auf 13"–14"-Laptops eine Spalte weniger konkurriert. Die Info bleibt in der Detail-Ansicht der Buchhaltung / im Mandantprofil erhalten.
 
-**UI-Elemente entfernen:**
-- Im `NeueBuchhaltungDialog`: Abschnitt „Bearbeitungsmodus / Automatisierung nutzen".
-- Im `BuchhaltungBearbeitenDialog`: alles zum `automatisierung_aktiv`-Flag.
-- Im Dashboard: Filter „Modus" (Nur Weiterleitung / Automatisierung), `automatisierung_aktiv`-Referenzen, OCR-Fortschritts-Spalten.
-- Im `MandantProfil`: alles rund um Buchungen erfassen, Paket, Steuer, ELSTER.
-- Im `BelegeVollansicht`: OCR-Status-Anzeige.
+4. **Sticky-Header + saubere Scroll-Fallback**
+   - `overflow-x-auto` bleibt, zusätzlich wird `min-w-full` gesetzt und die Tabelle bekommt `whitespace-nowrap` nur für schmale Zellen (Monat, Frist, Bearbeiter), damit lange Firmennamen weiter umbrechen dürfen.
 
-## 2. Was bleibt
+5. **Container-Padding auf Laptop reduzieren**
+   - Wrapper `p-6 lg:p-10` → `p-4 lg:p-6 xl:p-8`, damit die Tabelle auf 1280 px mehr Platz hat.
 
-- Mandanten verwalten (unverändert)
-- Buchhaltungen anlegen (ohne Automatisierungs-Schalter)
-- Belege hochladen und als Dokumente sammeln
-- Status-Workflow: Eingegangen → In Bearbeitung → In Prüfung → Buchhaltung erledigt → Warten auf Mandant
-- Zurückweisung durch den Chef mit Grund
-- Kommentare, Benachrichtigungen, Co-Bearbeiter
-- Dashboard, Meine Mandanten, Statistiken (rein Status-basiert), Benutzerverwaltung
-- **Seite „Erstellte Buchhaltungen"** (`/buchhaltungen`) — umgebaut zu einer schlanken Liste aller Buchhaltungen mit Status „Buchhaltung erledigt": Mandant, Monat, Bearbeiter, Fertigstellung, Belege-Anzahl, PDF-Download der Original-Belege. Kein Journal/SuSa/UStVA/Paket mehr.
-
-## 3. Datenbank-Cleanup (Migration)
-
-- Tabellen droppen: `buchhaltungs_abschluesse`, `buchungen`.
-- Spalten aus `buchhaltungen` entfernen: `automatisierung_aktiv`.
-- Spalten aus `buchhaltung_dokumente` entfernen: `ocr_status`, `ocr_result`, `ocr_error` (falls vorhanden).
-- Storage-Bucket `buchhaltungen` (enthält Paket-PDFs) leeren, Bucket kann bleiben.
-
-## 4. Statistiken-Seite
-
-Wird auf reine Workflow-KPIs reduziert: durchschnittliche Bearbeitungszeit pro Status, Buchhaltungen pro Bearbeiter, Rückweisungsquote, monatliche Volumenkurve. Nichts mehr über Umsatz, USt, Journal.
-
-## 5. Demo-Seed anpassen
-
-`supabase/functions/demo-seed/index.ts` erzeugt keine `buchungen` und keine `buchhaltungs_abschluesse` mehr — nur noch Mandanten, Buchhaltungen mit Status, Belegeingänge, Kommentare, Benachrichtigungen. Anschließend einmal neu ausführen.
-
-## 6. Technisches
-
-- Nach dem SQL-Cleanup wird `src/integrations/supabase/types.ts` automatisch neu generiert.
-- Alle `import`-Referenzen auf gelöschte Dateien werden im gleichen Zug entfernt, damit der Build durchläuft.
-- Routing: `/buchhaltungen` behält Route + Sidebar-Eintrag „Erstellte Buchhaltungen", nur der Inhalt ist minimal.
+## Nicht angefasst
+- Sidebar, Filter-Toolbar, KPI-Kacheln bleiben unverändert.
+- Keine Business-Logik-Änderung, keine Datenbank-Änderung.
+- „Erstellte Buchhaltungen"-Seite bleibt der Ort, an dem abgeschlossene Buchhaltungen im Detail sichtbar sind.
 
 ## Offene Frage
-Soll die Seite „Erstellte Buchhaltungen" auch für **Sekretariat** sichtbar sein? Aktuell nur für Sachbearbeiter/Chef. Wenn du nichts sagst, lasse ich es so.
+Die aufklappbare Detail-Zeile enthielt aktuell nur den Hinweistext „Weiterleitung & Organisation — Belege dienen als Referenz." Ok, dass dieser Text ersatzlos entfällt? (Alternativ könnte er als kleiner Info-Tooltip am Tabellenkopf bleiben.)
