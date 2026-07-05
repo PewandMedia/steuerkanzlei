@@ -27,7 +27,7 @@ interface Props {
     mandant_id?: string;
     dauerfristverlaengerung?: boolean;
     faellig_am_manuell?: boolean;
-    automatisierung_aktiv?: boolean;
+    
   };
   onSaved: () => void;
 }
