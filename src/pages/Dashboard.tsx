@@ -562,7 +562,7 @@ export default function Dashboard() {
                     ref={setRef(b.id) as any}
                     className={[rowCls, highlightId === b.id ? "focus-row-highlight" : ""].filter(Boolean).join(" ")}
                   >
-                    <TableCell className="font-medium min-w-[260px] align-top">
+                    <TableCell className="font-medium min-w-[220px] align-top">
                       <div className="flex flex-wrap items-center gap-1.5">
                         {istNaechster && (
                           <Badge className="gap-1 bg-primary text-primary-foreground hover:bg-primary/90">
