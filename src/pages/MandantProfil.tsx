@@ -113,7 +113,7 @@ export default function MandantProfil() {
       fetchAllRows<any>((from, to) =>
         supabase
           .from("buchhaltungen")
-          .select("id, monat, status, belegeingang_datum, fertiggestellt_datum, abgabe_datum, faellig_am, notizen, bearbeiter_id, bearbeiter:benutzer!buchhaltungen_bearbeiter_id_fkey(name), buchhaltung_dokumente(id), buchhaltungs_abschluesse(id)")
+          .select("id, monat, status, belegeingang_datum, fertiggestellt_datum, abgabe_datum, faellig_am, notizen, bearbeiter_id, bearbeiter:benutzer!buchhaltungen_bearbeiter_id_fkey(name), buchhaltung_dokumente(id)")
           .eq("mandant_id", id)
           .order("erstellt_am", { ascending: false })
           .order("id", { ascending: true })
@@ -135,7 +135,7 @@ export default function MandantProfil() {
         bearbeiter_id: d.bearbeiter_id,
         bearbeiter: d.bearbeiter,
         dokumente_count: Array.isArray(d.buchhaltung_dokumente) ? d.buchhaltung_dokumente.length : 0,
-        hat_abschluss: Array.isArray(d.buchhaltungs_abschluesse) && d.buchhaltungs_abschluesse.length > 0,
+        hat_abschluss: d.status === "Buchhaltung erledigt",
       }))
     );
     setLoading(false);
