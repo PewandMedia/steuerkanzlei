@@ -830,19 +830,9 @@ export default function Dashboard() {
                             currentStatus={b.status}
                             rolle={rolle}
                             onStatusChanged={fetchData}
-                            automatisierungAktiv={b.automatisierung_aktiv}
                           />
                         )}
-                        {b.automatisierung_aktiv && (
-                          <BuchhaltungsPaketDialog
-                            buchhaltungId={b.id}
-                            status={b.status}
-                            monat={b.monat}
-                            mandantName={b.mandant?.firma || b.mandant?.name || "–"}
-                            hatAbschluss={b.hat_abschluss}
-                            onChanged={fetchData}
-                          />
-                        )}
+
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
