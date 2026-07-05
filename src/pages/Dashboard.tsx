@@ -878,22 +878,16 @@ export default function Dashboard() {
                             </div>
                           </div>
                         )}
-                        {b.automatisierung_aktiv ? (
+                        <div className="space-y-1">
                           <div className="text-sm text-muted-foreground italic flex items-center gap-2">
-                            <Sparkles className="h-4 w-4 text-primary" />
-                            Automatisierung aktiv — KI-Belegerkennung und Buchhaltungs-Paket finden Sie direkt in den Spalten „Belege" und „Aktionen" dieser Zeile.
+                            <Forward className="h-4 w-4" />
+                            Weiterleitung & Organisation — Belege dienen als Referenz. Die Buchhaltung wird extern bearbeitet.
                           </div>
-                        ) : (
-                          <div className="space-y-1">
-                            <div className="text-sm text-muted-foreground italic flex items-center gap-2">
-                              <Forward className="h-4 w-4" />
-                              Nur Weiterleitung — Belege dienen als Hinweis. Bearbeiten Sie diese Buchhaltung extern.
-                            </div>
-                            <p className="text-xs text-muted-foreground pl-6">
-                              Status hier ändern → <strong>Annehmen</strong>, <strong>Warten auf Mandant</strong>, <strong>Zur Prüfung senden</strong>, <strong>Erledigt</strong>.
-                            </p>
-                          </div>
-                        )}
+                          <p className="text-xs text-muted-foreground pl-6">
+                            Status hier ändern → <strong>Annehmen</strong>, <strong>Warten auf Mandant</strong>, <strong>Zur Prüfung senden</strong>, <strong>Erledigt</strong>.
+                          </p>
+                        </div>
+
                       </TableCell>
                     </TableRow>
                   )}
