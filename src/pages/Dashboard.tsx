@@ -849,33 +849,6 @@ export default function Dashboard() {
                       </div>
                     </TableCell>
                   </TableRow>
-                  {expandedId === b.id && (
-                    <TableRow className="bg-muted/20 hover:bg-muted/20">
-                      <TableCell colSpan={9} className="p-4">
-                        {b.status === "Warten auf Mandant" && (
-                          <div className="mb-3 rounded-md border border-orange-300 bg-orange-50 px-3 py-2 text-sm flex items-start gap-2">
-                            <Inbox className="h-4 w-4 mt-0.5 text-orange-600 shrink-0" />
-                            <div>
-                              <p className="font-medium text-orange-900">Mandant hat Unterlagen nachgereicht?</p>
-                              <p className="text-xs text-orange-800">
-                                In der Spalte „Belege" auf <strong>{b.dokumente_count > 0 ? "Belege ansehen" : "Belege hochladen"}</strong> klicken und im Dialog oben rechts „Belege nachreichen" wählen, um die neuen Dateien hinzuzufügen. Der Sachbearbeiter wird automatisch informiert.
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                        <div className="space-y-1">
-                          <div className="text-sm text-muted-foreground italic flex items-center gap-2">
-                            <Forward className="h-4 w-4" />
-                            Weiterleitung & Organisation — Belege dienen als Referenz. Die Buchhaltung wird extern bearbeitet.
-                          </div>
-                          <p className="text-xs text-muted-foreground pl-6">
-                            Status hier ändern → <strong>Annehmen</strong>, <strong>Warten auf Mandant</strong>, <strong>Zur Prüfung senden</strong>, <strong>Erledigt</strong>.
-                          </p>
-                        </div>
-
-                      </TableCell>
-                    </TableRow>
-                  )}
                   </Fragment>
                   );
                 })
