@@ -18,7 +18,7 @@ import { Constants } from "@/integrations/supabase/types";
 import type { Database } from "@/integrations/supabase/types";
 import { FileText, Clock, AlertTriangle, CheckCircle, AlertOctagon, Inbox, MoreHorizontal, Pencil, Trash2, MessageSquare, PhoneCall, ChevronDown, ChevronRight, FileSpreadsheet, PlayCircle, Search, Flame, Star, Send, X, Briefcase, ClipboardCheck, Loader2 } from "lucide-react";
 import { Sparkles, Forward } from "lucide-react";
-import { BuchhaltungsPaketDialog } from "@/components/BuchhaltungsPaketDialog";
+
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
