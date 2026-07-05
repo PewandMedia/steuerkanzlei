@@ -16,7 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Constants } from "@/integrations/supabase/types";
 import type { Database } from "@/integrations/supabase/types";
-import { FileText, Clock, AlertTriangle, CheckCircle, AlertOctagon, Inbox, MoreHorizontal, Pencil, Trash2, MessageSquare, PhoneCall, ChevronDown, ChevronRight, FileSpreadsheet, PlayCircle, Search, Flame, Star, Send, X, Briefcase, ClipboardCheck, Loader2 } from "lucide-react";
+import { FileText, Clock, AlertTriangle, CheckCircle, AlertOctagon, Inbox, MoreHorizontal, Pencil, Trash2, MessageSquare, PhoneCall, FileSpreadsheet, Search, Flame, Star, Send, X, Briefcase, ClipboardCheck, Loader2 } from "lucide-react";
 import { Sparkles, Forward } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -83,7 +83,7 @@ export default function Dashboard() {
   const [editingBuchhaltung, setEditingBuchhaltung] = useState<BuchhaltungRow | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [kontaktBuchhaltung, setKontaktBuchhaltung] = useState<BuchhaltungRow | null>(null);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  // expandedId entfernt — keine Anzeigen-Spalte mehr
   const [belegeingaengeDialog, setBelegeingaengeDialog] = useState<BuchhaltungRow | null>(null);
   // ocr batch button removed
 
@@ -359,7 +359,7 @@ export default function Dashboard() {
   }, [filtered, belegRang]);
 
   return (
-    <div className="p-6 lg:p-10 space-y-6 min-w-0">
+    <div className="p-4 lg:p-6 xl:p-8 space-y-6 min-w-0">
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
@@ -524,21 +524,20 @@ export default function Dashboard() {
           <Table className="table-modern">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[180px]">Buchhaltung</TableHead>
-                <TableHead className="min-w-[260px]">Mandant</TableHead>
+                <TableHead className="min-w-[220px]">Mandant</TableHead>
                 <TableHead>Monat</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Frist</TableHead>
                 <TableHead>Belege</TableHead>
                 <TableHead>Bearbeiter</TableHead>
-                <TableHead className="hidden xl:table-cell">Belegeingang</TableHead>
-                <TableHead className="min-w-[240px]">Aktionen</TableHead>
+                <TableHead className="hidden 2xl:table-cell">Belegeingang</TableHead>
+                <TableHead className="min-w-[200px]">Aktionen</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-12">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-12">
                     <Inbox className="h-10 w-10 mx-auto mb-3 opacity-30" />
                     <p className="font-medium">Keine Buchhaltungen vorhanden</p>
                     <p className="text-sm">
@@ -563,22 +562,7 @@ export default function Dashboard() {
                     ref={setRef(b.id) as any}
                     className={[rowCls, highlightId === b.id ? "focus-row-highlight" : ""].filter(Boolean).join(" ")}
                   >
-                    <TableCell className="w-[180px] p-2">
-                      <Button
-                        variant={b.hat_abschluss ? "default" : "outline"}
-                        size="sm"
-                        className={b.hat_abschluss ? "bg-green-600 hover:bg-green-700 text-white w-full" : "w-full"}
-                        onClick={() => setExpandedId(expandedId === b.id ? null : b.id)}
-                      >
-                        {b.hat_abschluss ? (
-                          <><FileSpreadsheet className="h-3.5 w-3.5 mr-1.5" /> Buchhaltung</>
-                        ) : (
-                          <><FileSpreadsheet className="h-3.5 w-3.5 mr-1.5" /> Anzeigen</>
-                        )}
-                        {expandedId === b.id ? <ChevronDown className="h-3.5 w-3.5 ml-1" /> : <ChevronRight className="h-3.5 w-3.5 ml-1" />}
-                      </Button>
-                    </TableCell>
-                    <TableCell className="font-medium min-w-[260px] align-top">
+                    <TableCell className="font-medium min-w-[220px] align-top">
                       <div className="flex flex-wrap items-center gap-1.5">
                         {istNaechster && (
                           <Badge className="gap-1 bg-primary text-primary-foreground hover:bg-primary/90">
@@ -802,7 +786,7 @@ export default function Dashboard() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="hidden xl:table-cell">
+                    <TableCell className="hidden 2xl:table-cell">
                       <div className="flex flex-col gap-1">
                         {b.belegeingaenge.length > 1 && (
                           <Button
@@ -819,7 +803,7 @@ export default function Dashboard() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-wrap items-center gap-1 min-w-[260px]">
+                      <div className="flex flex-wrap items-center gap-1 min-w-[200px]">
                         <WhatsAppButton
                           telefon={b.mandant?.telefon}
                           mandantName={b.mandant?.firma || b.mandant?.name}
@@ -864,33 +848,6 @@ export default function Dashboard() {
                       </div>
                     </TableCell>
                   </TableRow>
-                  {expandedId === b.id && (
-                    <TableRow className="bg-muted/20 hover:bg-muted/20">
-                      <TableCell colSpan={9} className="p-4">
-                        {b.status === "Warten auf Mandant" && (
-                          <div className="mb-3 rounded-md border border-orange-300 bg-orange-50 px-3 py-2 text-sm flex items-start gap-2">
-                            <Inbox className="h-4 w-4 mt-0.5 text-orange-600 shrink-0" />
-                            <div>
-                              <p className="font-medium text-orange-900">Mandant hat Unterlagen nachgereicht?</p>
-                              <p className="text-xs text-orange-800">
-                                In der Spalte „Belege" auf <strong>{b.dokumente_count > 0 ? "Belege ansehen" : "Belege hochladen"}</strong> klicken und im Dialog oben rechts „Belege nachreichen" wählen, um die neuen Dateien hinzuzufügen. Der Sachbearbeiter wird automatisch informiert.
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                        <div className="space-y-1">
-                          <div className="text-sm text-muted-foreground italic flex items-center gap-2">
-                            <Forward className="h-4 w-4" />
-                            Weiterleitung & Organisation — Belege dienen als Referenz. Die Buchhaltung wird extern bearbeitet.
-                          </div>
-                          <p className="text-xs text-muted-foreground pl-6">
-                            Status hier ändern → <strong>Annehmen</strong>, <strong>Warten auf Mandant</strong>, <strong>Zur Prüfung senden</strong>, <strong>Erledigt</strong>.
-                          </p>
-                        </div>
-
-                      </TableCell>
-                    </TableRow>
-                  )}
                   </Fragment>
                   );
                 })
