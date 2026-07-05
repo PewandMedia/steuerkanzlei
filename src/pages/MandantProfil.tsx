@@ -8,12 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { StatusBadge } from "@/components/StatusBadge";
 import { DeadlineIndicator } from "@/components/DeadlineIndicator";
 import { BelegeVollansicht } from "@/components/BelegeVollansicht";
-import { BuchhaltungsPaketDialog } from "@/components/BuchhaltungsPaketDialog";
-import { BuchungenListe } from "@/components/BuchungenListe";
 import { StatusTransitionWithFortschritt } from "@/components/StatusTransitionWithFortschritt";
-import { BuchungsFortschritt } from "@/components/BuchungsFortschritt";
-import { BuchhaltungsPaket } from "@/components/BuchhaltungsPaket";
 import { BuchhaltungBearbeitenDialog } from "@/components/BuchhaltungBearbeitenDialog";
+
 import { toast } from "@/hooks/use-toast";
 import { getDeadlineStatus } from "@/lib/deadline-utils";
 import { ArrowLeft, Building2, User, FileText, CheckCircle, Clock, AlertOctagon, MoreHorizontal, Pencil, Trash2, Mail, Phone, MapPin, Calendar, Hash, CreditCard, Briefcase, Plus, ChevronDown, ChevronRight, FileSpreadsheet } from "lucide-react";
