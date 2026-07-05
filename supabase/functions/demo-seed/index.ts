@@ -209,8 +209,8 @@ Deno.serve(async (req) => {
       users: userIds,
       mandanten: mandantenIds.length,
       buchhaltungen: insertedBh,
-      buchungen: insertedBu,
     });
+
   } catch (e) {
     console.error("demo-seed error", e);
     return j(500, { error: (e as Error).message });
