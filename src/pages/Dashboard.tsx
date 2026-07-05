@@ -73,7 +73,7 @@ export default function Dashboard() {
   const [bearbeiterFilter, setBearbeiterFilter] = useState<string>("all");
   const [monatFilter, setMonatFilter] = useState("");
   const [fristFilter, setFristFilter] = useState<"all" | "ueberfaellig" | "woche" | "monat">("all");
-  const [modusFilter, setModusFilter] = useState<"all" | "weiterleitung" | "automatisierung">("all");
+  // modusFilter entfernt — kein Automatisierungsmodus mehr
   const [suche, setSuche] = useState("");
   const [sortierung, setSortierung] = useState<"prioritaet" | "frist" | "mandant" | "erstellt">("prioritaet");
   const [nurMeine, setNurMeine] = useState(false);
