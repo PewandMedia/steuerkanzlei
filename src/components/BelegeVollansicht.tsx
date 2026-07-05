@@ -3,16 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { Download, Printer, FileText, Loader2, Eye, ChevronLeft, ChevronRight, CheckCircle2, Image as ImageIcon, Upload, X } from "lucide-react";
+import { Download, Printer, FileText, Loader2, Eye, ChevronLeft, ChevronRight, Image as ImageIcon, Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { BuchungsErfassung } from "./BuchungsErfassung";
-import { BuchungsFortschritt } from "./BuchungsFortschritt";
 import { PdfViewer } from "./PdfViewer";
-import { useBuchungsFortschritt } from "@/hooks/use-buchungs-fortschritt";
 import { isImageFile } from "@/lib/file-types";
-import { Sparkles } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { DokumenteUpload } from "./DokumenteUpload";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -29,7 +23,6 @@ interface Props {
   mandantName: string;
   monat: string;
   dokumenteCount: number;
-  autoStartBuchen?: boolean;
   onChanged?: () => void;
 }
 
@@ -40,24 +33,11 @@ function triggerDownload(blobUrl: string, dateiname: string) {
   a.click();
 }
 
-export function BelegeVollansicht({ buchhaltungId, mandantId, mandantName, monat, dokumenteCount, autoStartBuchen, onChanged }: Props) {
+export function BelegeVollansicht({ buchhaltungId, mandantName, monat, dokumenteCount, onChanged }: Props) {
   const [open, setOpen] = useState(false);
   const { rolle } = useAuth();
   const canUpload = rolle === "Sekretariat" || rolle === "Sachbearbeiter" || rolle === "Chef";
-  const canBuchen = rolle === "Sachbearbeiter" || rolle === "Chef";
   const [uploadOpen, setUploadOpen] = useState(false);
-  const automationKey = `automation:${buchhaltungId}`;
-  const [automationEnabled, setAutomationEnabled] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return window.localStorage.getItem(automationKey) === "1";
-  });
-  const toggleAutomation = (val: boolean) => {
-    setAutomationEnabled(val);
-    try {
-      if (val) window.localStorage.setItem(automationKey, "1");
-      else window.localStorage.removeItem(automationKey);
-    } catch { /* noop */ }
-  };
   const [dokumente, setDokumente] = useState<Dokument[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -65,8 +45,6 @@ export function BelegeVollansicht({ buchhaltungId, mandantId, mandantName, monat
   const [previewIsImage, setPreviewIsImage] = useState(false);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const currentBlobUrlRef = useRef<string | null>(null);
-  const { bookedDocIds, markBooked, total: liveTotal } = useBuchungsFortschritt(buchhaltungId);
-  const effectiveCount = liveTotal || dokumenteCount;
 
   const cleanupBlobUrl = () => {
     if (currentBlobUrlRef.current) {
@@ -86,12 +64,9 @@ export function BelegeVollansicht({ buchhaltungId, mandantId, mandantName, monat
       if (error || !data?.signedUrl) throw new Error("Signed URL fehlgeschlagen");
       const res = await fetch(data.signedUrl);
       const blob = await res.blob();
-      let finalBlob: Blob;
-      if (asImage) {
-        finalBlob = blob.type.startsWith("image/") ? blob : new Blob([blob], { type: "image/jpeg" });
-      } else {
-        finalBlob = blob.type === "application/pdf" ? blob : new Blob([blob], { type: "application/pdf" });
-      }
+      const finalBlob = asImage
+        ? (blob.type.startsWith("image/") ? blob : new Blob([blob], { type: "image/jpeg" }))
+        : (blob.type === "application/pdf" ? blob : new Blob([blob], { type: "application/pdf" }));
       const blobUrl = URL.createObjectURL(finalBlob);
       currentBlobUrlRef.current = blobUrl;
       setPreviewBlobUrl(blobUrl);
@@ -114,19 +89,8 @@ export function BelegeVollansicht({ buchhaltungId, mandantId, mandantName, monat
     setDokumente(data ?? []);
     setLoading(false);
     if (data && data.length > 0) {
-      // If autoStartBuchen, jump to first unbooked document
-      let startIndex = 0;
-      if (autoStartBuchen) {
-        const { data: bookedData } = await supabase
-          .from("buchungen")
-          .select("dokument_id")
-          .eq("buchhaltung_id", buchhaltungId);
-        const bookedSet = new Set((bookedData ?? []).map((b) => b.dokument_id).filter(Boolean));
-        const firstUnbooked = data.findIndex((d) => !bookedSet.has(d.id));
-        if (firstUnbooked >= 0) startIndex = firstUnbooked;
-      }
-      setSelectedIndex(startIndex);
-      loadPreview(data[startIndex].dateipfad);
+      setSelectedIndex(0);
+      loadPreview(data[0].dateipfad);
     }
   };
 
@@ -141,9 +105,7 @@ export function BelegeVollansicht({ buchhaltungId, mandantId, mandantName, monat
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, buchhaltungId]);
 
-  useEffect(() => {
-    return () => cleanupBlobUrl();
-  }, []);
+  useEffect(() => () => cleanupBlobUrl(), []);
 
   const selectDoc = (index: number) => {
     setSelectedIndex(index);
@@ -161,7 +123,6 @@ export function BelegeVollansicht({ buchhaltungId, mandantId, mandantName, monat
       return;
     }
     if (previewIsImage) {
-      // Print image via popup window
       const win = window.open("", "_blank");
       if (!win) {
         toast({ title: "Drucken nicht möglich", description: "Popup-Blocker verhindert das Drucken.", variant: "destructive" });
@@ -172,7 +133,6 @@ export function BelegeVollansicht({ buchhaltungId, mandantId, mandantName, monat
       return;
     }
     try {
-      // Hidden iframe just for printing — separate from the canvas viewer
       const printFrame = document.createElement("iframe");
       printFrame.style.position = "fixed";
       printFrame.style.right = "0";
@@ -243,10 +203,10 @@ export function BelegeVollansicht({ buchhaltungId, mandantId, mandantName, monat
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5">
           <Eye className="h-4 w-4" />
-          <span>{effectiveCount} Beleg{effectiveCount !== 1 ? "e" : ""} ansehen</span>
+          <span>{dokumenteCount} Beleg{dokumenteCount !== 1 ? "e" : ""} ansehen</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-[95vw] w-[95vw] h-[92vh] flex flex-col p-0 gap-0 sm:max-w-[1600px]">
+      <DialogContent className="max-w-[95vw] w-[95vw] h-[92vh] flex flex-col p-0 gap-0 sm:max-w-[1400px]">
         <DialogHeader className="px-6 py-3 border-b">
           <DialogTitle className="flex items-center justify-between gap-2 flex-wrap pr-8">
             <span>Belege — {mandantName} ({monat})</span>
@@ -261,19 +221,6 @@ export function BelegeVollansicht({ buchhaltungId, mandantId, mandantName, monat
                   {uploadOpen ? <X className="h-4 w-4 mr-1" /> : <Upload className="h-4 w-4 mr-1" />}
                   {uploadOpen ? "Schließen" : "Belege nachreichen"}
                 </Button>
-              )}
-              {canBuchen && (
-                <div className="flex items-center gap-2 mr-2 px-2 py-1 rounded-md border bg-muted/40">
-                  <Sparkles className={cn("h-3.5 w-3.5", automationEnabled ? "text-primary" : "text-muted-foreground")} />
-                  <Label htmlFor={`auto-${buchhaltungId}`} className="text-xs cursor-pointer select-none">
-                    Automatik
-                  </Label>
-                  <Switch
-                    id={`auto-${buchhaltungId}`}
-                    checked={automationEnabled}
-                    onCheckedChange={toggleAutomation}
-                  />
-                </div>
               )}
               <Button variant="outline" size="sm" onClick={handlePrint} disabled={!previewBlobUrl}>
                 <Printer className="h-4 w-4 mr-1" /> Drucken
@@ -294,11 +241,6 @@ export function BelegeVollansicht({ buchhaltungId, mandantId, mandantName, monat
               />
             </div>
           )}
-          {dokumente.length > 0 && (
-            <div className="pt-2">
-              <BuchungsFortschritt buchhaltungId={buchhaltungId} />
-            </div>
-          )}
         </DialogHeader>
 
         {loading ? (
@@ -306,11 +248,10 @@ export function BelegeVollansicht({ buchhaltungId, mandantId, mandantName, monat
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="flex-1 grid min-h-0" style={{ gridTemplateColumns: (mandantId && canBuchen) ? "220px 1fr 460px" : "220px 1fr" }}>
+          <div className="flex-1 grid min-h-0" style={{ gridTemplateColumns: "220px 1fr" }}>
             {/* Left: Beleg-Liste */}
             <div className="space-y-1 overflow-y-auto border-r p-3">
               {dokumente.map((dok, i) => {
-                const isBooked = bookedDocIds.has(dok.id);
                 const docIsImage = isImageFile(dok.dateiname);
                 return (
                   <button
@@ -320,7 +261,7 @@ export function BelegeVollansicht({ buchhaltungId, mandantId, mandantName, monat
                       "w-full text-left p-2.5 rounded-md text-sm transition-colors",
                       i === selectedIndex
                         ? "bg-primary/10 text-primary font-medium"
-                        : "hover:bg-muted text-foreground"
+                        : "hover:bg-muted text-foreground",
                     )}
                   >
                     <div className="flex items-center gap-2">
@@ -335,19 +276,14 @@ export function BelegeVollansicht({ buchhaltungId, mandantId, mandantName, monat
                           {new Date(dok.erstellt_am).toLocaleDateString("de-DE")}
                         </p>
                       </div>
-                      {isBooked ? (
-                        <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" aria-label="Gebucht" />
-                      ) : (
-                        <span className="h-2 w-2 rounded-full bg-yellow-500 shrink-0" aria-label="Offen" />
-                      )}
                     </div>
                   </button>
                 );
               })}
             </div>
 
-            {/* Middle: PDF-Vorschau */}
-            <div className="flex flex-col min-h-0 p-3 border-r">
+            {/* Right: PDF-Vorschau */}
+            <div className="flex flex-col min-h-0 p-3">
               {dokumente.length > 1 && (
                 <div className="flex items-center justify-between mb-2">
                   <Button variant="ghost" size="sm" disabled={selectedIndex === 0} onClick={() => selectDoc(selectedIndex - 1)}>
@@ -396,27 +332,6 @@ export function BelegeVollansicht({ buchhaltungId, mandantId, mandantName, monat
                 </div>
               )}
             </div>
-
-            {/* Right: Embedded Buchungs-Formular */}
-            {mandantId && canBuchen && (
-              <div className="min-h-0 overflow-hidden flex flex-col">
-                <BuchungsErfassung
-                  open={true}
-                  onOpenChange={() => { /* not used in embedded */ }}
-                  buchhaltungId={buchhaltungId}
-                  mandantId={mandantId}
-                  dokumente={dokumente}
-                  startDokumentId={null}
-                  embedded
-                  embeddedDocIndex={selectedIndex}
-                  onRequestDocIndex={(i) => selectDoc(i)}
-                  automationEnabled={automationEnabled}
-                  onSaved={(info) => {
-                    if (info?.dokumentId) markBooked(info.dokumentId);
-                  }}
-                />
-              </div>
-            )}
           </div>
         )}
       </DialogContent>
