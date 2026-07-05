@@ -4,7 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useAuth } from "@/hooks/use-auth";
 import { StatusBadge } from "@/components/StatusBadge";
 import { StatusTransitionWithFortschritt } from "@/components/StatusTransitionWithFortschritt";
-import { BuchungsFortschritt } from "@/components/BuchungsFortschritt";
+
 import { DeadlineIndicator } from "@/components/DeadlineIndicator";
 import { BelegeVollansicht } from "@/components/BelegeVollansicht";
 import { NeueBuchhaltungDialog } from "@/components/NeueBuchhaltungDialog";
