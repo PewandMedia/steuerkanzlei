@@ -251,20 +251,6 @@ export function BuchhaltungBearbeitenDialog({ open, onOpenChange, buchhaltung, o
             </div>
             <Switch checked={dfv} onCheckedChange={setDfv} />
           </div>
-          <div className="flex items-center justify-between rounded-md border p-3">
-            <div className="pr-3">
-              <Label className="cursor-pointer">Automatisierung (OCR &amp; Buchhaltungs-Paket)</Label>
-              <p className="text-xs text-muted-foreground">
-                Aktiv: KI-Belegerkennung, Buchungserfassung und UStVA-Paket sind verfügbar.
-                Inaktiv: nur Belegweiterleitung – Sachbearbeiter ändert lediglich den Status.
-              </p>
-            </div>
-            <Switch
-              checked={automatisierungAktiv}
-              onCheckedChange={setAutomatisierungAktiv}
-              disabled={!darfModusAendern}
-            />
-          </div>
           <div className="space-y-1">
             <Label>Fällig am</Label>
             <Input type="date" value={faelligAm} onChange={(e) => setFaelligAm(e.target.value)} />
