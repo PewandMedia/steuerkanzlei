@@ -114,7 +114,7 @@ export function BuchhaltungBearbeitenDialog({ open, onOpenChange, buchhaltung, o
       faellig_am: faelligAm || null,
       notizen: notizen || null,
       dauerfristverlaengerung: dfv,
-      automatisierung_aktiv: automatisierungAktiv,
+
     };
     // Wurde die Frist manuell verändert? Dann Manuell-Flag setzen.
     if (faelligAm && faelligAm !== initialFaelligAm) {
