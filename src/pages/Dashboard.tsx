@@ -922,7 +922,6 @@ export default function Dashboard() {
             ...editingBuchhaltung,
             dauerfristverlaengerung: editingBuchhaltung.dauerfristverlaengerung,
             faellig_am_manuell: editingBuchhaltung.faellig_am_manuell,
-            faellig_am_manuell: editingBuchhaltung.faellig_am_manuell,
           }}
           onSaved={fetchData}
         />
