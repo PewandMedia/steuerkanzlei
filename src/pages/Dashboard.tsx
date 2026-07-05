@@ -118,7 +118,7 @@ export default function Dashboard() {
         faellig_am: d.faellig_am,
         faellig_am_manuell: !!d.faellig_am_manuell,
         dauerfristverlaengerung: !!d.dauerfristverlaengerung,
-        automatisierung_aktiv: !!d.automatisierung_aktiv,
+        
         zurueckgewiesen_am: d.zurueckgewiesen_am ?? null,
         notizen: d.notizen,
         bearbeiter_id: d.bearbeiter_id,
