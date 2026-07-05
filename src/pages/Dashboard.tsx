@@ -162,7 +162,8 @@ export default function Dashboard() {
   };
 
   useEffect(() => { fetchData(); }, []);
-  useEffect(() => { if (rolle === "Sekretariat") fetchMandanten(); }, [rolle]);
+  useEffect(() => { fetchMandanten(); }, []);
+
 
   const bearbeiterList = useMemo(() => {
     const names = new Set<string>();
