@@ -786,7 +786,7 @@ export default function Dashboard() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="hidden xl:table-cell">
+                    <TableCell className="hidden 2xl:table-cell">
                       <div className="flex flex-col gap-1">
                         {b.belegeingaenge.length > 1 && (
                           <Button
