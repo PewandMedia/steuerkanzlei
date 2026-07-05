@@ -54,6 +54,8 @@ interface BuchhaltungRow {
   bearbeiter_id: string;
   mandant_id: string;
   dokumente_count: number;
+  hat_abschluss: boolean;
+
   dauerfristverlaengerung: boolean;
   faellig_am_manuell: boolean;
   zurueckgewiesen_am: string | null;
