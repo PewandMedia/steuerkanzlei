@@ -666,21 +666,13 @@ export default function Dashboard() {
                         {b.mandant?.firma && <span className="text-muted-foreground text-xs ml-1">({b.mandant.firma})</span>}
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-1">
-                        {b.automatisierung_aktiv ? (
-                          <Badge variant="outline" className="gap-1 text-[10px] h-5 border-primary/40 text-primary bg-primary/5">
-                            <Sparkles className="h-2.5 w-2.5" /> Automatisierung
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="gap-1 text-[10px] h-5 text-muted-foreground">
-                            <Forward className="h-2.5 w-2.5" /> Nur Weiterleitung
-                          </Badge>
-                        )}
                         {b.zurueckgewiesen_am && b.status === "In Bearbeitung" && (
                           <Badge variant="destructive" className="gap-1 text-[10px] h-5">
                             <AlertOctagon className="h-2.5 w-2.5" /> Vom Chef zurückgewiesen
                           </Badge>
                         )}
                       </div>
+
                       {b.zurueckgewiesen_am && b.status === "In Bearbeitung" && b.notizen && (
                         <div className="mt-2 block w-full rounded-md border border-destructive/40 bg-destructive/5 px-2 py-1.5">
                           <p className="text-[10px] font-semibold uppercase tracking-wide text-destructive flex items-center gap-1">
