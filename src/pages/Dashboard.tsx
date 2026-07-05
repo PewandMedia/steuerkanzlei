@@ -118,6 +118,8 @@ export default function Dashboard() {
         faellig_am: d.faellig_am,
         faellig_am_manuell: !!d.faellig_am_manuell,
         dauerfristverlaengerung: !!d.dauerfristverlaengerung,
+        hat_abschluss: d.status === "Buchhaltung erledigt",
+
         
         zurueckgewiesen_am: d.zurueckgewiesen_am ?? null,
         notizen: d.notizen,
