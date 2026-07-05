@@ -96,7 +96,7 @@ export default function Dashboard() {
       data = await fetchAll<any>((from, to) =>
         supabase
           .from("buchhaltungen")
-          .select("id, monat, status, belegeingang_datum, fertiggestellt_datum, abgabe_datum, faellig_am, faellig_am_manuell, dauerfristverlaengerung, automatisierung_aktiv, zurueckgewiesen_am, notizen, bearbeiter_id, mandant_id, gruppen_id, mandant:mandanten(id, mandanten_nummer, name, firma, telefon, email), bearbeiter:benutzer!buchhaltungen_bearbeiter_id_fkey(name), buchhaltung_dokumente(id, ocr_status), buchhaltungs_abschluesse(id), co:buchhaltung_co_bearbeiter(bearbeiter:benutzer!buchhaltung_co_bearbeiter_bearbeiter_id_fkey(id, name)), belegeingaenge(id, datum, notiz)")
+          .select("id, monat, status, belegeingang_datum, fertiggestellt_datum, abgabe_datum, faellig_am, faellig_am_manuell, dauerfristverlaengerung, zurueckgewiesen_am, notizen, bearbeiter_id, mandant_id, gruppen_id, mandant:mandanten(id, mandanten_nummer, name, firma, telefon, email), bearbeiter:benutzer!buchhaltungen_bearbeiter_id_fkey(name), buchhaltung_dokumente(id), co:buchhaltung_co_bearbeiter(bearbeiter:benutzer!buchhaltung_co_bearbeiter_bearbeiter_id_fkey(id, name)), belegeingaenge(id, datum, notiz)")
           .order("erstellt_am", { ascending: false })
           .order("id", { ascending: true })
           .range(from, to) as any,
@@ -126,8 +126,6 @@ export default function Dashboard() {
         mandant: d.mandant,
         bearbeiter: d.bearbeiter,
         dokumente_count: docs.length,
-        dokumente_ocr_done: docs.filter((x: any) => x.ocr_status === "done").length,
-        hat_abschluss: Array.isArray(d.buchhaltungs_abschluesse) && d.buchhaltungs_abschluesse.length > 0,
         co_bearbeiter: Array.isArray(d.co)
           ? d.co.map((c: any) => c.bearbeiter).filter(Boolean)
           : [],
@@ -174,8 +172,6 @@ export default function Dashboard() {
     const result = buchhaltungen.filter((b) => {
       if (statusFilter !== "all" && b.status !== statusFilter) return false;
       if (bearbeiterFilter !== "all" && b.bearbeiter?.name !== bearbeiterFilter) return false;
-      if (modusFilter === "weiterleitung" && b.automatisierung_aktiv) return false;
-      if (modusFilter === "automatisierung" && !b.automatisierung_aktiv) return false;
       if (monatFilter && !b.monat.toLowerCase().includes(monatFilter.toLowerCase())) return false;
       if (nurMeine && benutzerId) {
         const istHaupt = b.bearbeiter_id === benutzerId;
@@ -232,7 +228,7 @@ export default function Dashboard() {
   }, [buchhaltungen, statusFilter, bearbeiterFilter, monatFilter, fristFilter, suche, sortierung, nurMeine, benutzerId]);
 
   // Pagination — initial 10, weitere per Button / Auto-Load on Scroll
-  const paginationKey = `${statusFilter}|${bearbeiterFilter}|${monatFilter}|${fristFilter}|${modusFilter}|${suche}|${sortierung}|${nurMeine}`;
+  const paginationKey = `${statusFilter}|${bearbeiterFilter}|${monatFilter}|${fristFilter}|${suche}|${sortierung}|${nurMeine}`;
   const [pageSize, setPageSize] = usePageSize("pageSize:dashboard");
   const { visible: visibleRows, page, totalPages, goToPage, total: totalRows, shown: shownRows } =
     usePaginatedList(filtered, pageSize, paginationKey);
@@ -248,7 +244,6 @@ export default function Dashboard() {
     setStatusFilter("all");
     setBearbeiterFilter("all");
     setFristFilter("all");
-    setModusFilter("all");
     setMonatFilter("");
     setSuche("");
     setNurMeine(false);
@@ -292,14 +287,13 @@ export default function Dashboard() {
     return map;
   }, [buchhaltungen]);
 
-  const istFilterAktiv = statusFilter !== "all" || bearbeiterFilter !== "all" || monatFilter !== "" || fristFilter !== "all" || suche !== "" || modusFilter !== "all";
+  const istFilterAktiv = statusFilter !== "all" || bearbeiterFilter !== "all" || monatFilter !== "" || fristFilter !== "all" || suche !== "";
   const resetFilter = () => {
     setStatusFilter("all");
     setBearbeiterFilter("all");
     setMonatFilter("");
     setFristFilter("all");
     setSuche("");
-    setModusFilter("all");
   };
 
   // Erste Zeile als "Als Nächstes" highlighten — außer wenn nur Erledigte da sind
