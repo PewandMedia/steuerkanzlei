@@ -67,7 +67,6 @@ export function NeueBuchhaltungDialog({ mandanten, onCreated, preselectedMandant
   const [dfvOverride, setDfvOverride] = useState<boolean | null>(null);
   const today = new Date().toISOString().split("T")[0];
   const [belegeingaenge, setBelegeingaenge] = useState<BelegeingangEntry[]>([{ datum: today, notiz: "" }]);
-  const [automatisierungAktiv, setAutomatisierungAktiv] = useState<boolean>(false);
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -236,7 +235,6 @@ export function NeueBuchhaltungDialog({ mandanten, onCreated, preselectedMandant
     setLastAuto("");
     setDfvOverride(null);
     setBelegeingaenge([{ datum: new Date().toISOString().split("T")[0], notiz: "" }]);
-    setAutomatisierungAktiv(false);
     setFiles([]);
     setProgress(0);
     setNotiz("");
@@ -278,7 +276,6 @@ export function NeueBuchhaltungDialog({ mandanten, onCreated, preselectedMandant
         status: "Eingegangen",
         belegeingang_datum: earliest,
         dauerfristverlaengerung: dfvAktiv,
-        automatisierung_aktiv: automatisierungAktiv,
       };
       if (gruppenId) insertData.gruppen_id = gruppenId;
       // Manuelle Frist nur bei einzelnem Monat; sonst Auto-Frist pro Monat (Trigger füllt sie, aber wir setzen sie hier explizit für sofortige Anzeige).
