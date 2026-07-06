@@ -85,10 +85,10 @@ export default function Login() {
 
         <div className="relative max-w-md space-y-6">
           <h1 className="text-4xl font-semibold leading-tight tracking-tight">
-            Testen Sie das<br />TAXOM Backoffice.
+            Testen Sie das<br />Pewand Media Backoffice.
           </h1>
           <p className="text-base leading-relaxed text-white/75">
-            Digitale Kanzlei-Software für Steuerberater. Wählen Sie rechts eine Rolle
+            Digitales Backoffice für Fahrschulen. Wählen Sie rechts eine Rolle
             und erleben Sie den kompletten Ablauf mit echten Beispiel-Mandanten.
           </p>
 
