@@ -1,8 +1,8 @@
-# Taxom Backoffice
+# Pewand Media Backoffice
 
-Internes Backoffice für Steuerkanzleien: Verwaltung von Mandanten, Buchhaltungen, Fristen und Auswertungen.
+Internes Backoffice für Fahrschulen: Organisation, Weiterleitung und Verwaltung von Mandanten, Unterlagen und Fristen.
 
 ## Stack
 - React 18 + Vite + TypeScript
 - Tailwind CSS + shadcn/ui
-- Backend: Supabase (Datenbank, Auth, Storage, Edge Functions)
+- Backend: Lovable Cloud (Datenbank, Auth, Storage, Edge Functions)
