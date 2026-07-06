@@ -17,9 +17,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
             <div className="hidden md:flex items-center gap-2 pl-1">
               <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-brand text-white text-[10px] font-semibold tracking-widest shadow-sm">
-                TX
+                PM
               </div>
-              <span className="text-sm font-semibold tracking-[0.28em] text-foreground">TAXOM</span>
+              <span className="text-sm font-semibold tracking-[0.28em] text-foreground">PEWAND MEDIA</span>
             </div>
           </header>
           <main className="flex-1 min-w-0 overflow-auto">

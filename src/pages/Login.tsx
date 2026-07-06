@@ -36,8 +36,8 @@ const ROLES = [
 
 export default function Login() {
   usePageMeta(
-    "TAXOM Demo – Kanzlei-Backoffice testen",
-    "Interaktive Demo des TAXOM Kanzlei-Backoffices. Wählen Sie eine Rolle und testen Sie das System mit Beispieldaten.",
+    "Pewand Media Demo – Fahrschul-Backoffice testen",
+    "Interaktive Demo des Pewand Media Backoffices für Fahrschulen. Wählen Sie eine Rolle und testen Sie das System mit Beispieldaten.",
   );
 
   const [loadingRole, setLoadingRole] = useState<string | null>(null);
@@ -74,9 +74,9 @@ export default function Login() {
         <div className="relative flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-md border border-white/30 bg-white/10 text-sm font-semibold tracking-widest backdrop-blur">
-              TX
+              PM
             </div>
-            <span className="text-lg font-semibold tracking-[0.3em]">TAXOM</span>
+            <span className="text-lg font-semibold tracking-[0.3em]">PEWAND MEDIA</span>
           </div>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-medium tracking-wider uppercase backdrop-blur">
             <Sparkles className="h-3 w-3" /> Live-Demo
@@ -85,10 +85,10 @@ export default function Login() {
 
         <div className="relative max-w-md space-y-6">
           <h1 className="text-4xl font-semibold leading-tight tracking-tight">
-            Testen Sie das<br />TAXOM Backoffice.
+            Testen Sie das<br />Pewand Media Backoffice.
           </h1>
           <p className="text-base leading-relaxed text-white/75">
-            Digitale Kanzlei-Software für Steuerberater. Wählen Sie rechts eine Rolle
+            Digitales Backoffice für Fahrschulen. Wählen Sie rechts eine Rolle
             und erleben Sie den kompletten Ablauf mit echten Beispiel-Mandanten.
           </p>
 
@@ -116,7 +116,7 @@ export default function Login() {
           </ul>
         </div>
 
-        <p className="relative text-xs text-white/50">© 2026 TAXOM · Kanzlei-Software</p>
+        <p className="relative text-xs text-white/50">© 2026 Pewand Media · Fahrschul-Software</p>
       </aside>
 
       {/* Rechte Seite — Rollen-Auswahl */}
@@ -125,9 +125,9 @@ export default function Login() {
           <div className="lg:hidden flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-md bg-brand text-brand-foreground text-xs font-semibold tracking-widest">
-                TX
+                PM
               </div>
-              <span className="text-base font-semibold tracking-[0.3em] text-foreground">TAXOM</span>
+              <span className="text-base font-semibold tracking-[0.3em] text-foreground">PEWAND MEDIA</span>
             </div>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-0.5 text-[10px] font-medium tracking-wider uppercase text-muted-foreground">
               <Sparkles className="h-3 w-3" /> Demo
@@ -178,10 +178,10 @@ export default function Login() {
 
           <div className="rounded-lg border border-dashed border-border bg-muted/40 p-4 text-center space-y-2">
             <p className="text-sm font-medium text-foreground">
-              Interessiert an TAXOM für Ihre Kanzlei?
+              Interessiert an Pewand Media für Ihre Fahrschule?
             </p>
             <p className="text-xs text-muted-foreground">
-              Schreiben Sie uns an <a href="mailto:kontakt@taxom.de" className="text-brand hover:underline">kontakt@taxom.de</a> für ein persönliches Angebot.
+              Schreiben Sie uns an <a href="mailto:kontakt@pewand-media.de" className="text-brand hover:underline">kontakt@pewand-media.de</a> für ein persönliches Angebot.
             </p>
           </div>
         </div>
