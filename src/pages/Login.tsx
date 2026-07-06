@@ -36,8 +36,8 @@ const ROLES = [
 
 export default function Login() {
   usePageMeta(
-    "TAXOM Demo – Kanzlei-Backoffice testen",
-    "Interaktive Demo des TAXOM Kanzlei-Backoffices. Wählen Sie eine Rolle und testen Sie das System mit Beispieldaten.",
+    "Pewand Media Demo – Fahrschul-Backoffice testen",
+    "Interaktive Demo des Pewand Media Backoffices für Fahrschulen. Wählen Sie eine Rolle und testen Sie das System mit Beispieldaten.",
   );
 
   const [loadingRole, setLoadingRole] = useState<string | null>(null);
