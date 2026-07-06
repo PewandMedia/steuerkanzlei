@@ -116,7 +116,7 @@ export default function Login() {
           </ul>
         </div>
 
-        <p className="relative text-xs text-white/50">© 2026 TAXOM · Kanzlei-Software</p>
+        <p className="relative text-xs text-white/50">© 2026 Pewand Media · Fahrschul-Software</p>
       </aside>
 
       {/* Rechte Seite — Rollen-Auswahl */}
