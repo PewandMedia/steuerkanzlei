@@ -88,7 +88,7 @@ export function AppSidebar() {
         ) : (
           <div className="flex justify-center">
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-brand text-white text-[10px] font-semibold tracking-widest shadow-sm">
-              TX
+              PM
             </div>
           </div>
         )}
