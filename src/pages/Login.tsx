@@ -178,10 +178,10 @@ export default function Login() {
 
           <div className="rounded-lg border border-dashed border-border bg-muted/40 p-4 text-center space-y-2">
             <p className="text-sm font-medium text-foreground">
-              Interessiert an TAXOM für Ihre Kanzlei?
+              Interessiert an Pewand Media für Ihre Fahrschule?
             </p>
             <p className="text-xs text-muted-foreground">
-              Schreiben Sie uns an <a href="mailto:kontakt@taxom.de" className="text-brand hover:underline">kontakt@taxom.de</a> für ein persönliches Angebot.
+              Schreiben Sie uns an <a href="mailto:kontakt@pewand-media.de" className="text-brand hover:underline">kontakt@pewand-media.de</a> für ein persönliches Angebot.
             </p>
           </div>
         </div>
