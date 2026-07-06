@@ -74,9 +74,9 @@ export default function Login() {
         <div className="relative flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-md border border-white/30 bg-white/10 text-sm font-semibold tracking-widest backdrop-blur">
-              TX
+              PM
             </div>
-            <span className="text-lg font-semibold tracking-[0.3em]">TAXOM</span>
+            <span className="text-lg font-semibold tracking-[0.3em]">PEWAND MEDIA</span>
           </div>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-medium tracking-wider uppercase backdrop-blur">
             <Sparkles className="h-3 w-3" /> Live-Demo
