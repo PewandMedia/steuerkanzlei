@@ -1,32 +1,35 @@
-## Ziel
-Dashboard-Tabelle passt auf Laptop-Auflösungen (≥ 1280 px) ohne horizontales Scrollen. Die "Anzeigen"/"Buchhaltung"-Spalte fliegt raus — sie liefert im Weiterleitungs-Modell keinen Mehrwert und blockiert 180 px Breite.
+# Rebranding: Taxom → Pewand Media
 
-## Änderungen in `src/pages/Dashboard.tsx`
+Das Backoffice wird komplett von "Taxom" (Steuerkanzlei) auf **Pewand Media** (Backoffice für eine Fahrschule) umgestellt. Alle sichtbaren Taxom-Erwähnungen, das Logo-Kürzel "TX" und die Steuerberater-Sprache verschwinden.
 
-1. **Spalte „Buchhaltung/Anzeigen" komplett entfernen**
-   - `TableHead` mit `w-[180px]` (Zeile 527) raus.
-   - Zugehörige `TableCell` mit dem Expand-Button (Zeile 566–580) raus.
-   - `expandedId`-State, die aufklappbare Details-Row (Zeile 867–893) und der Import von `ChevronDown/ChevronRight/PlayCircle` (nur hier genutzt) werden entfernt.
-   - `colSpan={9}` in der Leer-Zeile und Detail-Row auf `8` angepasst.
-   - Der "Buchhaltung erledigt"-Hinweis bleibt weiter über den Status-Badge in der Status-Spalte sichtbar (klickbar → `/buchhaltungen`), also kein Info-Verlust.
+## Was auf der Login-Seite geändert wird
 
-2. **Aktionen-Spalte kompakter**
-   - `min-w-[240px]` auf `min-w-[200px]` und die innere `min-w-[260px]` auf `min-w-[200px]` reduzieren, damit die Zeile bei 1280–1440 px nicht mehr überläuft.
-   - `WhatsAppButton` bleibt, `StatusTransitionWithFortschritt` bleibt, `MoreHorizontal` bleibt.
+- Titel „TAXOM Backoffice testen" → „Pewand Media – Fahrschul-Backoffice testen"
+- Überschrift „Testen Sie das TAXOM Backoffice" → „Testen Sie das Pewand Media Backoffice"
+- Beschreibung: „Digitale Kanzlei-Software für Steuerberater" → „Digitales Backoffice für Fahrschulen"
+- Footer: „© 2026 TAXOM · Kanzlei-Software" → „© 2026 Pewand Media · Fahrschul-Software"
+- Kontakt-Mail `kontakt@taxom.de` → `kontakt@pewand-media.de`
+- Demo-E-Mails (`demo-*@taxom-demo.de`) bleiben technisch bestehen (sind in der Datenbank hinterlegt), werden aber optisch nicht mehr angezeigt — die Rollen-Karten zeigen nur Titel/Beschreibung.
+- Logo-Kürzel „TX" → „PM"
+- Feature-Text „Rollenbasierte Workflows – Sekretariat, Buchhaltung, Chef" bleibt strukturell, wird aber sprachlich neutral gehalten.
 
-3. **Belegeingang-Spalte an mittlere Laptops anpassen**
-   - Breakpoint auf `hidden 2xl:table-cell` (≥ 1536 px) verschieben, damit auf 13"–14"-Laptops eine Spalte weniger konkurriert. Die Info bleibt in der Detail-Ansicht der Buchhaltung / im Mandantprofil erhalten.
+## Was in Layout & Sidebar geändert wird
 
-4. **Sticky-Header + saubere Scroll-Fallback**
-   - `overflow-x-auto` bleibt, zusätzlich wird `min-w-full` gesetzt und die Tabelle bekommt `whitespace-nowrap` nur für schmale Zellen (Monat, Frist, Bearbeiter), damit lange Firmennamen weiter umbrechen dürfen.
+- `AppLayout` Header: Kürzel „TX" → „PM", Wortmarke „TAXOM" → „PEWAND MEDIA"
+- `AppSidebar` Header: „TX" → „PM", „TAXOM" → „PEWAND MEDIA"
 
-5. **Container-Padding auf Laptop reduzieren**
-   - Wrapper `p-6 lg:p-10` → `p-4 lg:p-6 xl:p-8`, damit die Tabelle auf 1280 px mehr Platz hat.
+## Was global geändert wird
 
-## Nicht angefasst
-- Sidebar, Filter-Toolbar, KPI-Kacheln bleiben unverändert.
-- Keine Business-Logik-Änderung, keine Datenbank-Änderung.
-- „Erstellte Buchhaltungen"-Seite bleibt der Ort, an dem abgeschlossene Buchhaltungen im Detail sichtbar sind.
+- `index.html`: `<title>` und `<meta description>`, `og:title`, `og:description`, `author` → Pewand Media / Fahrschul-Backoffice
+- `README.md`: Titel und Beschreibung neu
+- `usePageMeta`-Hook: Suffix „· Taxom Backoffice" → „· Pewand Media"
+
+## Was NICHT geändert wird
+
+- Datenbank-Tabellen, Spalten, Rollen-Namen (Sekretariat/Sachbearbeiter/Chef) — nur die Anzeige-Texte werden angepasst, keine Schema-Migrationen.
+- Demo-Login-E-Mails im Backend (sonst funktioniert der Demo-Login nicht mehr).
+- Geschäftslogik rund um Buchhaltungen bleibt bestehen — nur Wording wird generalisiert, wo Taxom/Kanzlei/Steuerberater explizit vorkommt.
 
 ## Offene Frage
-Die aufklappbare Detail-Zeile enthielt aktuell nur den Hinweistext „Weiterleitung & Organisation — Belege dienen als Referenz." Ok, dass dieser Text ersatzlos entfällt? (Alternativ könnte er als kleiner Info-Tooltip am Tabellenkopf bleiben.)
+
+Sollen die fachlichen Begriffe **„Buchhaltung", „Mandant", „Belege"** ebenfalls auf Fahrschul-Sprache (z. B. „Kurs", „Fahrschüler", „Unterlagen") umbenannt werden — oder nur das Branding (Name/Logo/Meta) tauschen und die Fachbegriffe erst in einem späteren Schritt anpassen?
