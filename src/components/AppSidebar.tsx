@@ -74,7 +74,7 @@ export function AppSidebar() {
         {!collapsed ? (
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-brand text-white text-[11px] font-semibold tracking-widest shadow-sm">
-              TX
+              PM
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
