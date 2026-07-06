@@ -78,7 +78,7 @@ export function AppSidebar() {
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <h2 className="text-sm font-semibold tracking-[0.28em] text-foreground leading-none">TAXOM</h2>
+                <h2 className="text-sm font-semibold tracking-[0.28em] text-foreground leading-none">PEWAND MEDIA</h2>
                 <span className="rounded-full bg-brand/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-brand">Demo</span>
               </div>
               <p className="text-[11px] text-muted-foreground truncate mt-1">{benutzerName} · {rolle}</p>
