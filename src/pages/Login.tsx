@@ -184,6 +184,10 @@ export default function Login() {
               Schreiben Sie uns an <a href="mailto:kontakt@pewand-media.de" className="text-brand hover:underline">kontakt@pewand-media.de</a> für ein persönliches Angebot.
             </p>
           </div>
+
+          <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+            <a href="/impressum" className="hover:text-foreground transition-colors">Impressum</a>
+          </div>
         </div>
       </main>
     </div>
