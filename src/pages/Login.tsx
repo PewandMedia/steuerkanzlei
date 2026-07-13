@@ -5,7 +5,7 @@ import { ArrowRight, Briefcase, Crown, FileCheck2, Phone, ShieldCheck, Sparkles 
 import { usePageMeta } from "@/hooks/use-page-meta";
 import { Button } from "@/components/ui/button";
 
-const DEMO_PASSWORD = "demo-taxom-2026!";
+const DEMO_PASSWORD = "demo-pewand-2026!";
 
 const ROLES = [
   {
@@ -36,8 +36,8 @@ const ROLES = [
 
 export default function Login() {
   usePageMeta(
-    "Pewand Media Demo – Fahrschul-Backoffice testen",
-    "Interaktive Demo des Pewand Media Backoffices für Fahrschulen. Wählen Sie eine Rolle und testen Sie das System mit Beispieldaten.",
+    "Pewand Media Demo – Kanzlei-Backoffice testen",
+    "Interaktive Demo des Pewand Media Backoffices für Steuerberater. Wählen Sie eine Rolle und testen Sie das System mit Beispieldaten.",
   );
 
   const [loadingRole, setLoadingRole] = useState<string | null>(null);
@@ -88,7 +88,7 @@ export default function Login() {
             Testen Sie das<br />Pewand Media Backoffice.
           </h1>
           <p className="text-base leading-relaxed text-white/75">
-            Digitales Backoffice für Fahrschulen. Wählen Sie rechts eine Rolle
+            Digitales Kanzlei-Backoffice für Steuerberater. Wählen Sie rechts eine Rolle
             und erleben Sie den kompletten Ablauf mit echten Beispiel-Mandanten.
           </p>
 
@@ -116,7 +116,7 @@ export default function Login() {
           </ul>
         </div>
 
-        <p className="relative text-xs text-white/50">© 2026 Pewand Media · Fahrschul-Software</p>
+        <p className="relative text-xs text-white/50">© 2026 Pewand Media · Kanzlei-Software</p>
       </aside>
 
       {/* Rechte Seite — Rollen-Auswahl */}
@@ -178,7 +178,7 @@ export default function Login() {
 
           <div className="rounded-lg border border-dashed border-border bg-muted/40 p-4 text-center space-y-2">
             <p className="text-sm font-medium text-foreground">
-              Interessiert an Pewand Media für Ihre Fahrschule?
+              Interessiert an Pewand Media für Ihre Kanzlei?
             </p>
             <p className="text-xs text-muted-foreground">
               Schreiben Sie uns an <a href="mailto:kontakt@pewand-media.de" className="text-brand hover:underline">kontakt@pewand-media.de</a> für ein persönliches Angebot.
