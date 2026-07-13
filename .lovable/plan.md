@@ -1,50 +1,41 @@
-# Plan: Branding korrigieren — Pewand Media bleibt, Branche zurück zu Steuerberater
-
-Das vorherige Rebranding hat versehentlich nicht nur das Branding (Taxom → Pewand Media), sondern auch die Branchensprache auf „Fahrschule“ geändert. Dieser Plan stellt die Steuerberater-/Kanzlei-Sprache wieder her und entfernt die restlichen versteckten Taxom-Referenzen.
+# Impressum erstellen
 
 ## Ziel
-- User-facing Texte sagen wieder „Steuerberater / Kanzlei“ statt „Fahrschule“.
-- Der Firmenname bleibt überall **Pewand Media** (kein Taxom mehr).
-- Funktionale Demo-Logins bleiben intakt.
+Eine öffentliche, SEO-freundliche Impressum-Seite unter `/impressum` hinzufügen, die das bestehende Design-System verwendet und die vorgegebenen rechtlichen Angaben exakt wiedergibt.
 
-## Änderungen
+## Umsetzung
 
-### 1. User-facing Texte zurücksetzen
+1. **Neue Route in `src/App.tsx` registrieren**
+   - Route `/impressum` ohne Auth-Guard (öffentlich zugänglich).
+   - Sitzt als eigenständige öffentliche Seite neben `/login`.
 
-| Datei | Was geändert wird |
-|-------|-------------------|
-| `index.html` | `<title>`: „Fahrschul-Backoffice“ → „Kanzlei-Backoffice“; `description`/`og:description`: „für Fahrschulen“ → „für Steuerberater“ |
-| `README.md` | Beschreibung von „Internes Backoffice für Fahrschulen“ → „Internes Backoffice für Steuerberater: Organisation, Weiterleitung und Verwaltung von Mandanten, Belegen und Fristen.“ |
-| `src/pages/Login.tsx` | Meta-Titel/Description, Hero-Text, Footer ("Fahrschul-Software" → "Kanzlei-Software"), Kontakt-CTA ("für Ihre Fahrschule" → "für Ihre Kanzlei") |
+2. **Neue Seite `src/pages/Impressum.tsx` erstellen**
+   - Layout analog zur Login-Seite: zweigeteilte Ansicht auf Desktop (`lg:grid-cols-2`), zentrale Karte auf Mobile.
+   - Linke Seite mit Branding (PM-Logo, „PEWAND MEDIA", kurzer Claim).
+   - Rechte Seite mit dem Impressum-Inhalt als strukturierte Sektionen:
+     - Diensteanbieter (Name, Inhaber, Adresse, Deutschland)
+     - Kontakt (Telefon, E-Mail)
+     - Rechtliche Hinweise (Rechtsform, USt-IdNr.)
+     - Verantwortlich für den Inhalt (§ 55 RStV)
+     - Haftung für Inhalte
+     - Haftung für Links
+     - Urheberrecht
+     - EU-Streitschlichtung
+   - Verwendung der exakten Texte des Benutzers, ohne inhaltliche Änderungen.
+   - `usePageMeta` für Titel und Beschreibung setzen.
 
-Dabei bleiben der Firmenname „Pewand Media“, das Logo-Kürzel „PM“ und die Demo-Rollen-Karten unverändert.
+3. **Login-Seite um Impressum-Link ergänzen**
+   - In der Fußzeile des rechten Bereichs oder unter dem Kontakt-Block einen Link „Impressum" hinzufügen, der auf `/impressum` verweist.
 
-### 2. Versteckte Taxom-Referenzen entfernen
+## Design-Details
+- Farben ausschließlich über CSS-Variablen (`bg-brand`, `text-foreground`, `border`, etc.), keine hartcodierten Hex-Werte.
+- Karte mit `card-elevated` (weiß/heller Hintergrund, abgerundete Ecken, Schatten).
+- Überschriften mit `text-2xl font-semibold tracking-tight`.
+- Sektionsüberschriften mit `section-label`.
+- Links zu Telefon und E-Mail als `tel:` bzw. `mailto:`.
+- Link zur ODR-Plattform als externer Link mit `target="_blank" rel="noopener noreferrer"`.
 
-| Datei | Was geändert wird |
-|-------|-------------------|
-| `src/hooks/use-theme.tsx` | `localStorage`-Key `taxom:theme` → `pewand:theme` |
-| `src/components/StatusTransitionWithFortschritt.tsx` | Kommentar „TAXOM verwaltet jetzt …“ → neutral „Pewand Media verwaltet jetzt …“ |
-| `src/pages/Login.tsx` | `DEMO_PASSWORD = "demo-taxom-2026!"` → `demo-pewand-2026!` |
-
-### 3. Backend-Demo-Seed anpassen und neu ausführen
-
-`supabase/functions/demo-seed/index.ts`:
-- `DEMO_PASSWORD` an neues Frontend-Passwort anpassen.
-- Demo-E-Mail-Domain `taxom-demo.de` → `pewand-demo.de` (z. B. `demo-sekretariat@pewand-demo.de`).
-- Vor dem Anlegen neuer Demo-User die alten `taxom-demo.de`-User löschen, damit keine Taxom-Reste in der Datenbank verbleiben.
-- Edge Function neu deployen und Seed ausführen.
-
-## Was NICHT geändert wird
-
-- Fachbegriffe wie „Mandant“, „Buchhaltung“, „Belege“, „Sekretariat“, „Sachbearbeiter“, „Chef“ — diese gehören zum Steuerberater-Workflow und bleiben.
-- UI-Struktur, Dashboard, Sidebar, Funktionalität.
-
-## Risiken / Hinweise
-
-- Das Löschen der alten Demo-User entfernt auch deren Kommentar-/Benachrichtigungs-History. Diese werden aber durch den Seed ohnehin neu erzeugt.
-- Der `localStorage`-Key-Wechsel setzt das Theme für bestehende Browser einmal auf System-Default zurück (da der alte Key nicht mehr gelesen wird).
-
-## Abschluss
-
-Nach dem Plan ist das Projekt wieder ein Steuerberater-Backoffice mit Pewand Media als Markenname und ohne sichtbare oder versteckte Taxom-Referenzen.
+## Technische Details
+- Route-Definition: `<Route path="/impressum" element={<LoginGuard><Impressum /></LoginGuard>} />` oder einfach ohne Guard, damit sowohl Gäste als auch eingeloggte Nutzer die Seite sehen können.
+- Kein Backend- oder Datenbank-Change nötig.
+- Keine neuen Abhängigkeiten.
