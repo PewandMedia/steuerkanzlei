@@ -1,35 +1,50 @@
-# Rebranding: Taxom → Pewand Media
+# Plan: Branding korrigieren — Pewand Media bleibt, Branche zurück zu Steuerberater
 
-Das Backoffice wird komplett von "Taxom" (Steuerkanzlei) auf **Pewand Media** (Backoffice für eine Fahrschule) umgestellt. Alle sichtbaren Taxom-Erwähnungen, das Logo-Kürzel "TX" und die Steuerberater-Sprache verschwinden.
+Das vorherige Rebranding hat versehentlich nicht nur das Branding (Taxom → Pewand Media), sondern auch die Branchensprache auf „Fahrschule“ geändert. Dieser Plan stellt die Steuerberater-/Kanzlei-Sprache wieder her und entfernt die restlichen versteckten Taxom-Referenzen.
 
-## Was auf der Login-Seite geändert wird
+## Ziel
+- User-facing Texte sagen wieder „Steuerberater / Kanzlei“ statt „Fahrschule“.
+- Der Firmenname bleibt überall **Pewand Media** (kein Taxom mehr).
+- Funktionale Demo-Logins bleiben intakt.
 
-- Titel „TAXOM Backoffice testen" → „Pewand Media – Fahrschul-Backoffice testen"
-- Überschrift „Testen Sie das TAXOM Backoffice" → „Testen Sie das Pewand Media Backoffice"
-- Beschreibung: „Digitale Kanzlei-Software für Steuerberater" → „Digitales Backoffice für Fahrschulen"
-- Footer: „© 2026 TAXOM · Kanzlei-Software" → „© 2026 Pewand Media · Fahrschul-Software"
-- Kontakt-Mail `kontakt@taxom.de` → `kontakt@pewand-media.de`
-- Demo-E-Mails (`demo-*@taxom-demo.de`) bleiben technisch bestehen (sind in der Datenbank hinterlegt), werden aber optisch nicht mehr angezeigt — die Rollen-Karten zeigen nur Titel/Beschreibung.
-- Logo-Kürzel „TX" → „PM"
-- Feature-Text „Rollenbasierte Workflows – Sekretariat, Buchhaltung, Chef" bleibt strukturell, wird aber sprachlich neutral gehalten.
+## Änderungen
 
-## Was in Layout & Sidebar geändert wird
+### 1. User-facing Texte zurücksetzen
 
-- `AppLayout` Header: Kürzel „TX" → „PM", Wortmarke „TAXOM" → „PEWAND MEDIA"
-- `AppSidebar` Header: „TX" → „PM", „TAXOM" → „PEWAND MEDIA"
+| Datei | Was geändert wird |
+|-------|-------------------|
+| `index.html` | `<title>`: „Fahrschul-Backoffice“ → „Kanzlei-Backoffice“; `description`/`og:description`: „für Fahrschulen“ → „für Steuerberater“ |
+| `README.md` | Beschreibung von „Internes Backoffice für Fahrschulen“ → „Internes Backoffice für Steuerberater: Organisation, Weiterleitung und Verwaltung von Mandanten, Belegen und Fristen.“ |
+| `src/pages/Login.tsx` | Meta-Titel/Description, Hero-Text, Footer ("Fahrschul-Software" → "Kanzlei-Software"), Kontakt-CTA ("für Ihre Fahrschule" → "für Ihre Kanzlei") |
 
-## Was global geändert wird
+Dabei bleiben der Firmenname „Pewand Media“, das Logo-Kürzel „PM“ und die Demo-Rollen-Karten unverändert.
 
-- `index.html`: `<title>` und `<meta description>`, `og:title`, `og:description`, `author` → Pewand Media / Fahrschul-Backoffice
-- `README.md`: Titel und Beschreibung neu
-- `usePageMeta`-Hook: Suffix „· Taxom Backoffice" → „· Pewand Media"
+### 2. Versteckte Taxom-Referenzen entfernen
+
+| Datei | Was geändert wird |
+|-------|-------------------|
+| `src/hooks/use-theme.tsx` | `localStorage`-Key `taxom:theme` → `pewand:theme` |
+| `src/components/StatusTransitionWithFortschritt.tsx` | Kommentar „TAXOM verwaltet jetzt …“ → neutral „Pewand Media verwaltet jetzt …“ |
+| `src/pages/Login.tsx` | `DEMO_PASSWORD = "demo-taxom-2026!"` → `demo-pewand-2026!` |
+
+### 3. Backend-Demo-Seed anpassen und neu ausführen
+
+`supabase/functions/demo-seed/index.ts`:
+- `DEMO_PASSWORD` an neues Frontend-Passwort anpassen.
+- Demo-E-Mail-Domain `taxom-demo.de` → `pewand-demo.de` (z. B. `demo-sekretariat@pewand-demo.de`).
+- Vor dem Anlegen neuer Demo-User die alten `taxom-demo.de`-User löschen, damit keine Taxom-Reste in der Datenbank verbleiben.
+- Edge Function neu deployen und Seed ausführen.
 
 ## Was NICHT geändert wird
 
-- Datenbank-Tabellen, Spalten, Rollen-Namen (Sekretariat/Sachbearbeiter/Chef) — nur die Anzeige-Texte werden angepasst, keine Schema-Migrationen.
-- Demo-Login-E-Mails im Backend (sonst funktioniert der Demo-Login nicht mehr).
-- Geschäftslogik rund um Buchhaltungen bleibt bestehen — nur Wording wird generalisiert, wo Taxom/Kanzlei/Steuerberater explizit vorkommt.
+- Fachbegriffe wie „Mandant“, „Buchhaltung“, „Belege“, „Sekretariat“, „Sachbearbeiter“, „Chef“ — diese gehören zum Steuerberater-Workflow und bleiben.
+- UI-Struktur, Dashboard, Sidebar, Funktionalität.
 
-## Offene Frage
+## Risiken / Hinweise
 
-Sollen die fachlichen Begriffe **„Buchhaltung", „Mandant", „Belege"** ebenfalls auf Fahrschul-Sprache (z. B. „Kurs", „Fahrschüler", „Unterlagen") umbenannt werden — oder nur das Branding (Name/Logo/Meta) tauschen und die Fachbegriffe erst in einem späteren Schritt anpassen?
+- Das Löschen der alten Demo-User entfernt auch deren Kommentar-/Benachrichtigungs-History. Diese werden aber durch den Seed ohnehin neu erzeugt.
+- Der `localStorage`-Key-Wechsel setzt das Theme für bestehende Browser einmal auf System-Default zurück (da der alte Key nicht mehr gelesen wird).
+
+## Abschluss
+
+Nach dem Plan ist das Projekt wieder ein Steuerberater-Backoffice mit Pewand Media als Markenname und ohne sichtbare oder versteckte Taxom-Referenzen.

@@ -10,12 +10,12 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const DEMO_PASSWORD = "demo-taxom-2026!";
+const DEMO_PASSWORD = "demo-pewand-2026!";
 
 const DEMO_USERS = [
-  { email: "demo-sekretariat@taxom-demo.de", name: "Sabine Sekretariat", rolle: "Sekretariat" },
-  { email: "demo-sachbearbeiter@taxom-demo.de", name: "Simon Sachbearbeiter", rolle: "Sachbearbeiter" },
-  { email: "demo-chef@taxom-demo.de", name: "Christina Chef", rolle: "Chef" },
+  { email: "demo-sekretariat@pewand-demo.de", name: "Sabine Sekretariat", rolle: "Sekretariat" },
+  { email: "demo-sachbearbeiter@pewand-demo.de", name: "Simon Sachbearbeiter", rolle: "Sachbearbeiter" },
+  { email: "demo-chef@pewand-demo.de", name: "Christina Chef", rolle: "Chef" },
 ] as const;
 
 function j(status: number, body: unknown) {
@@ -32,7 +32,31 @@ Deno.serve(async (req) => {
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const svc = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-    // ---- 1. Create/ensure demo users ----
+    // ---- 1. Wipe old demo data (only demo mandanten) ----
+    // We tag demo mandanten via notizen prefix "[DEMO]"
+    const { data: oldMandanten } = await svc.from("mandanten").select("id").ilike("notizen", "[DEMO]%");
+    const oldIds = (oldMandanten ?? []).map((m: any) => m.id);
+    if (oldIds.length > 0) {
+      const { data: oldBh } = await svc.from("buchhaltungen").select("id").in("mandant_id", oldIds);
+      const bhIds = (oldBh ?? []).map((b: any) => b.id);
+      if (bhIds.length > 0) {
+        await svc.from("belegeingaenge").delete().in("buchhaltung_id", bhIds);
+        await svc.from("buchhaltung_co_bearbeiter").delete().in("buchhaltung_id", bhIds);
+        await svc.from("kommentare").delete().in("buchhaltung_id", bhIds);
+        await svc.from("benachrichtigungen").delete().in("buchhaltung_id", bhIds);
+        await svc.from("buchhaltungen").delete().in("id", bhIds);
+      }
+      await svc.from("mandanten").delete().in("id", oldIds);
+    }
+
+    // ---- 2. Remove old Taxom-era demo users so no @taxom-demo.de accounts remain ----
+    const { data: userList } = await svc.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    const oldTaxomUsers = (userList?.users ?? []).filter((u) => u.email?.endsWith("@taxom-demo.de"));
+    for (const u of oldTaxomUsers) {
+      await svc.auth.admin.deleteUser(u.id);
+    }
+
+    // ---- 3. Create/ensure demo users ----
     const userIds: Record<string, string> = {};
     for (const u of DEMO_USERS) {
       // Try to find existing
@@ -71,26 +95,7 @@ Deno.serve(async (req) => {
     const sachbearbeiterBid = benutzerIds["Sachbearbeiter"];
     const chefBid = benutzerIds["Chef"];
 
-    // ---- 2. Wipe old demo data (only demo mandanten) ----
-    // We tag demo mandanten via notizen prefix "[DEMO]"
-    const { data: oldMandanten } = await svc.from("mandanten").select("id").ilike("notizen", "[DEMO]%");
-    const oldIds = (oldMandanten ?? []).map((m: any) => m.id);
-    if (oldIds.length > 0) {
-      const { data: oldBh } = await svc.from("buchhaltungen").select("id").in("mandant_id", oldIds);
-      const bhIds = (oldBh ?? []).map((b: any) => b.id);
-      if (bhIds.length > 0) {
-        await svc.from("buchungen").delete().in("buchhaltung_id", bhIds);
-        await svc.from("belegeingaenge").delete().in("buchhaltung_id", bhIds);
-        await svc.from("buchhaltungs_abschluesse").delete().in("buchhaltung_id", bhIds);
-        await svc.from("buchhaltung_co_bearbeiter").delete().in("buchhaltung_id", bhIds);
-        await svc.from("kommentare").delete().in("buchhaltung_id", bhIds);
-        await svc.from("benachrichtigungen").delete().in("buchhaltung_id", bhIds);
-        await svc.from("buchhaltungen").delete().in("id", bhIds);
-      }
-      await svc.from("mandanten").delete().in("id", oldIds);
-    }
-
-    // ---- 3. Seed Mandanten ----
+    // ---- 4. Seed Mandanten ----
     const mandantenSeed = [
       { name: "Bäckerei Krause GmbH", firma: "Bäckerei Krause GmbH", vorname: "Peter", nachname: "Krause",
         unternehmensform: "GmbH", strasse: "Hauptstr. 12", plz: "10115", ort: "Berlin",
@@ -133,7 +138,7 @@ Deno.serve(async (req) => {
       mandantenIds.push(data.id);
     }
 
-    // ---- 4. Seed Buchhaltungen per mandant (multiple months, mixed status) ----
+    // ---- 5. Seed Buchhaltungen per mandant (multiple months, mixed status) ----
     const monate = ["01-2026", "02-2026", "03-2026", "04-2026", "05-2026"];
     // status per month (last month varies per mandant to create variety)
     const statuses: Array<"Buchhaltung erledigt" | "In Prüfung" | "In Bearbeitung" | "Warten auf Mandant" | "Eingegangen"> = [

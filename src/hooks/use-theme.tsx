@@ -9,7 +9,7 @@ interface ThemeContextValue {
 }
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
-const STORAGE_KEY = "taxom:theme";
+const STORAGE_KEY = "pewand:theme";
 
 function getInitialTheme(): Theme {
   if (typeof window === "undefined") return "light";
