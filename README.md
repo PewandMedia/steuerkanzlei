@@ -1,6 +1,6 @@
 # Pewand Media Backoffice
 
-Internes Backoffice für Fahrschulen: Organisation, Weiterleitung und Verwaltung von Mandanten, Unterlagen und Fristen.
+Internes Backoffice für Steuerberater: Organisation, Weiterleitung und Verwaltung von Mandanten, Belegen und Fristen.
 
 ## Stack
 - React 18 + Vite + TypeScript

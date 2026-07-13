@@ -13,7 +13,7 @@ interface Props {
 
 /**
  * Passthrough für Kompatibilität. Früher hat diese Komponente auf den
- * Buchungsfortschritt gewartet — TAXOM verwaltet jetzt nur noch die
+ * Buchungsfortschritt gewartet — Pewand Media verwaltet jetzt nur noch die
  * Weiterleitung, deshalb einfacher Wrapper um StatusTransition.
  */
 export function StatusTransitionWithFortschritt({ buchhaltungId, currentStatus, rolle, onStatusChanged }: Props) {
