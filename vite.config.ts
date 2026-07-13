@@ -9,8 +9,8 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     allowedHosts: [
-      "backoffice-taxom.de",
-      ".backoffice-taxom.de",
+      "backoffice.pewand-media.de",
+      ".backoffice.pewand-media.de",
       ".lovable.app",
       ".lovable.dev",
     ],
