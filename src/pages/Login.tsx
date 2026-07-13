@@ -10,7 +10,7 @@ const DEMO_PASSWORD = "demo-pewand-2026!";
 const ROLES = [
   {
     key: "Sekretariat",
-    email: "demo-sekretariat@taxom-demo.de",
+    email: "demo-sekretariat@pewand-demo.de",
     title: "Sekretariat",
     subtitle: "Sabine — Empfang & Mandanten-Kontakt",
     description: "Mandanten kontaktieren, fehlende Belege anfordern, Fristen im Blick behalten.",
@@ -21,7 +21,7 @@ const ROLES = [
     email: "demo-sachbearbeiter@taxom-demo.de",
     title: "Sachbearbeiter",
     subtitle: "Simon — Buchhaltung & Vorbereitung",
-    description: "Belege erfassen, Buchungen anlegen, Buchhaltungen zur Prüfung freigeben.",
+    description: "Belege erfassen, Buchhaltungen vorbereiten, zur Prüfung freigeben.",
     Icon: Briefcase,
   },
   {
