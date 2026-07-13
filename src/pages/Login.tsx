@@ -181,7 +181,7 @@ export default function Login() {
               Interessiert an Pewand Media für Ihre Kanzlei?
             </p>
             <p className="text-xs text-muted-foreground">
-              Schreiben Sie uns an <a href="mailto:kontakt@pewand-media.de" className="text-brand hover:underline">kontakt@pewand-media.de</a> für ein persönliches Angebot.
+              Schreiben Sie uns an <a href="mailto:info@pewandmedia.de" className="text-brand hover:underline">info@pewandmedia.de</a> für ein persönliches Angebot.
             </p>
           </div>
 
