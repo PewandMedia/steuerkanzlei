@@ -18,7 +18,7 @@ const ROLES = [
   },
   {
     key: "Sachbearbeiter",
-    email: "demo-sachbearbeiter@taxom-demo.de",
+    email: "demo-sachbearbeiter@pewand-demo.de",
     title: "Sachbearbeiter",
     subtitle: "Simon — Buchhaltung & Vorbereitung",
     description: "Belege erfassen, Buchhaltungen vorbereiten, zur Prüfung freigeben.",
@@ -26,7 +26,7 @@ const ROLES = [
   },
   {
     key: "Chef",
-    email: "demo-chef@taxom-demo.de",
+    email: "demo-chef@pewand-demo.de",
     title: "Chef / Steuerberater",
     subtitle: "Christina — Prüfung & Freigabe",
     description: "Buchhaltungen prüfen, freigeben oder zurückweisen, gesamte Kanzlei überblicken.",
