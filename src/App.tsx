@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { AppLayout } from "@/components/AppLayout";
 import Login from "./pages/Login";
+import Impressum from "./pages/Impressum";
 import Dashboard from "./pages/Dashboard";
 import Mandanten from "./pages/Mandanten";
 import MeineMandanten from "./pages/MeineMandanten";
