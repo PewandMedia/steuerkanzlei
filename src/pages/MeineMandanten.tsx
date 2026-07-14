@@ -288,11 +288,11 @@ export default function MeineMandanten() {
   }
 
   return (
-    <div className="p-6 lg:p-10 space-y-6 min-w-0">
+    <div className="p-4 sm:p-6 lg:p-10 space-y-4 sm:space-y-6 min-w-0">
       <div className="flex items-center gap-2">
-        <Users className="h-6 w-6 text-brand" />
-        <h1 className="text-2xl font-bold text-foreground">
-          {title} <span className="text-muted-foreground font-normal text-lg">({totalCount})</span>
+        <Users className="h-5 w-5 sm:h-6 sm:w-6 text-brand" />
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+          {title} <span className="text-muted-foreground font-normal text-base sm:text-lg">({totalCount})</span>
         </h1>
       </div>
 
@@ -300,12 +300,12 @@ export default function MeineMandanten() {
         <CardContent className="p-3 md:p-4">
           <div className="flex items-center gap-3">
             <div className="relative flex-1">
-              <Search className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Search className="h-4 w-4 sm:h-5 sm:w-5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Suche nach Name, Unternehmen, E-Mail, Telefon oder Mandantennummer…"
-                className="pl-11 h-12 text-base w-full"
+                placeholder="Suche nach Name, Nummer, Firma, E-Mail…"
+                className="pl-10 sm:pl-11 h-11 sm:h-12 text-sm sm:text-base w-full"
               />
             </div>
             <span className="hidden sm:inline-flex shrink-0 text-sm text-muted-foreground px-3 py-1.5 rounded-md bg-brand/5 border border-brand/15">
@@ -316,7 +316,7 @@ export default function MeineMandanten() {
       </Card>
 
       <Card className="card-elevated border-0 shadow-none">
-        <CardContent className="p-5">
+        <CardContent className="p-3 sm:p-5">
           {loading ? (
             <p className="text-sm text-muted-foreground text-center py-10">Lädt…</p>
           ) : totalCount === 0 ? (
@@ -326,7 +326,7 @@ export default function MeineMandanten() {
                 : "Keine Mandanten gefunden."}
             </p>
           ) : rolle === "Sachbearbeiter" ? (
-            <PaginatedList items={filtered.slice().sort((a, b) => a.name.localeCompare(b.name))} renderCard={renderCard} resetKey={search} />
+            <PaginatedList items={filtered} renderCard={renderCard} resetKey={search} />
           ) : (
             <Accordion type="multiple" defaultValue={grouped!.map((g) => g.key)} className="space-y-2">
               {grouped!.map((g) => (
