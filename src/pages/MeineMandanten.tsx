@@ -177,9 +177,9 @@ export default function MeineMandanten() {
       });
   }, [rolle, filtered, bearbeiterMap, numOf]);
 
-  const renderCard = (m: MandantCard) => {
+  const renderCard = useCallback((m: MandantCard) => {
     const adresse = [m.strasse, [m.plz, m.ort].filter(Boolean).join(" ")].filter((v) => v && v.trim() !== "").join(", ");
-    const sachbearbeiter = bearbeiter.find((b) => b.id === m.zugewiesener_bearbeiter_id)?.name;
+    const sachbearbeiter = m.zugewiesener_bearbeiter_id ? bearbeiterMap.get(m.zugewiesener_bearbeiter_id) : undefined;
     const offenLabel = m.offene_count === 1 ? "offene Buchhaltung" : "offene Buchhaltungen";
     const isUrgent = m.offene_count >= 3;
     const nr = m.mandanten_nummer || "—";
@@ -188,11 +188,11 @@ export default function MeineMandanten() {
       <div
         key={m.id}
         onClick={() => navigate(`/mandanten/${m.id}`, { state: { from: "/meine-mandanten" } })}
-        className="group cursor-pointer w-full rounded-lg border border-border/70 bg-card border-l-4 border-l-brand/60 hover:border-l-brand hover:shadow-[var(--shadow-card)] hover:bg-accent/30 transition-all duration-150 px-3 py-2.5"
+        className="group cursor-pointer w-full rounded-lg border border-border/70 bg-card border-l-4 border-l-brand/60 hover:border-l-brand hover:shadow-[var(--shadow-card)] hover:bg-accent/30 transition-all duration-150 px-2.5 py-2 sm:px-3 sm:py-2.5"
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Mandantennummer-Tile */}
-          <div className="shrink-0 h-12 w-20 md:w-24 rounded-md bg-brand/10 border border-brand/20 flex items-center justify-center text-brand px-1.5">
+          <div className="shrink-0 h-10 w-14 sm:h-12 sm:w-20 md:w-24 rounded-md bg-brand/10 border border-brand/20 flex items-center justify-center text-brand px-1.5">
             <span className={`font-mono font-bold leading-none whitespace-nowrap truncate ${nrSize}`}>
               {nr}
             </span>
@@ -240,7 +240,7 @@ export default function MeineMandanten() {
           </div>
 
           {/* Status rechts */}
-          <div className="shrink-0 flex items-center gap-2">
+          <div className="shrink-0 flex items-center gap-1.5 sm:gap-2">
             {sachbearbeiter && rolle === "Chef" && (
               <span className="hidden lg:inline-flex items-center gap-1 text-xs text-muted-foreground bg-muted/60 px-2 py-0.5 rounded">
                 <UserCircle2 className="h-3 w-3" />
@@ -252,10 +252,12 @@ export default function MeineMandanten() {
             </span>
             {m.offene_count > 0 ? (
               <span
-                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md border text-xs font-semibold bg-amber-50 border-amber-300 text-amber-900 ${isUrgent ? "ring-2 ring-amber-200" : ""}`}
+                className={`inline-flex items-center gap-1 px-2 py-1 sm:px-2.5 rounded-md border text-xs font-semibold bg-amber-50 border-amber-300 text-amber-900 ${isUrgent ? "ring-2 ring-amber-200" : ""}`}
+                aria-label={`${m.offene_count} ${offenLabel}`}
               >
                 <AlertCircle className="h-3.5 w-3.5" />
-                <span><span className="font-bold">{m.offene_count}</span> <span className="hidden sm:inline">{offenLabel}</span><span className="sm:hidden">offen</span></span>
+                <span className="font-bold">{m.offene_count}</span>
+                <span className="hidden sm:inline">{offenLabel}</span>
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-emerald-300 bg-emerald-50 text-emerald-800 text-xs font-medium">
@@ -268,7 +270,7 @@ export default function MeineMandanten() {
         </div>
       </div>
     );
-  };
+  }, [bearbeiterMap, navigate, rolle]);
 
   const title = rolle === "Sachbearbeiter" ? "Meine Mandanten" : "Mandanten je Sachbearbeiter";
   const totalCount = filtered.length;
