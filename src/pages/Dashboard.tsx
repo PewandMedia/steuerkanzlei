@@ -79,6 +79,7 @@ export default function Dashboard() {
   const [suche, setSuche] = useState("");
   const [sortierung, setSortierung] = useState<"prioritaet" | "frist" | "mandant" | "erstellt">("prioritaet");
   const [nurMeine, setNurMeine] = useState(false);
+  const [zeigeErledigte, setZeigeErledigte] = useState(false);
   const [mandanten, setMandanten] = useState<{ id: string; name: string; firma: string | null; zugewiesener_bearbeiter_id: string | null; dauerfristverlaengerung: boolean }[]>([]);
   const [editingBuchhaltung, setEditingBuchhaltung] = useState<BuchhaltungRow | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
