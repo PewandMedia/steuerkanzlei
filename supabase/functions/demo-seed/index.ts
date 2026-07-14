@@ -1,7 +1,6 @@
-// Demo seed: creates 3 demo users (Sekretariat, Sachbearbeiter, Chef) and
-// realistic sample data. Idempotent - safe to call multiple times.
-// SECURITY: This function is intentionally public for demo purposes. It only
-// operates on the fixed demo emails.
+// Demo seed: creates demo users (role users + 10 Sachbearbeiter) and
+// realistic sample data: 150 Mandanten, 550 erledigte + 20 überzogene + 100 offene Buchhaltungen.
+// Idempotent - safe to call multiple times. Public function (demo purpose).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
 
 const corsHeaders = {
@@ -12,17 +11,62 @@ const corsHeaders = {
 
 const DEMO_PASSWORD = "demo-pewand-2026!";
 
-const DEMO_USERS = [
+const ROLE_USERS = [
   { email: "demo-sekretariat@pewand-demo.de", name: "Sabine Sekretariat", rolle: "Sekretariat" },
   { email: "demo-sachbearbeiter@pewand-demo.de", name: "Simon Sachbearbeiter", rolle: "Sachbearbeiter" },
   { email: "demo-chef@pewand-demo.de", name: "Christina Chef", rolle: "Chef" },
 ] as const;
+
+const SACHBEARBEITER = [
+  "Anna Müller", "Ben Krüger", "Clara Hoffmann", "David Schulz", "Elena Wagner",
+  "Felix Becker", "Greta Schäfer", "Henry Fischer", "Isabel Weber", "Jonas Neumann",
+];
 
 function j(status: number, body: unknown) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+// PRNG (seeded für reproduzierbare Demo-Daten)
+let seed = 42;
+function rand() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+function pick<T>(arr: T[]): T { return arr[Math.floor(rand() * arr.length)]; }
+function randInt(min: number, max: number) { return Math.floor(rand() * (max - min + 1)) + min; }
+
+const VORNAMEN = ["Peter","Anna","Michael","Julia","Marco","Sven","Thomas","Lena","Klaus","Sabrina","Andreas","Nicole","Stefan","Petra","Jürgen","Silvia","Frank","Martina","Uwe","Katrin","Ralf","Sandra","Dirk","Kerstin","Oliver","Birgit","Markus","Susanne","Rainer","Angelika","Hans","Monika","Wolfgang","Claudia","Bernd","Barbara","Werner","Ingrid","Manfred","Renate"];
+const NACHNAMEN = ["Krause","Meier","Weber","Schmidt","Rossi","Larsen","Fischer","Müller","Schneider","Fischer","Wagner","Becker","Schulz","Hoffmann","Koch","Bauer","Richter","Klein","Wolf","Neumann","Schwarz","Zimmermann","Braun","Krüger","Hofmann","Hartmann","Lange","Schmitt","Werner","Krause","Lehmann","Schmid","Schulze","Maier","Köhler","Herrmann","König","Walter","Mayer","Huber"];
+const FIRMEN_PREFIX = ["Bäckerei","Metzgerei","Autohaus","Praxis","Kanzlei","Consulting","Software","Handwerk","Restaurant","Café","Studio","Werkstatt","Zentrum","Boutique","Apotheke","Fitness","Reisebüro","Immobilien","Logistik","Bau"];
+const FIRMEN_SUFFIX = ["Nord","Süd","West","Ost","City","Central","Premium","Express","Classic","Modern","Family","24","Elite","Top","Prime"];
+const RECHTSFORMEN = ["GmbH","UG","Einzelunternehmen","Freiberufler","GmbH & Co. KG","GbR","AG"];
+const STAEDTE: Array<[string, string]> = [
+  ["10115","Berlin"],["20359","Hamburg"],["80539","München"],["50667","Köln"],["60311","Frankfurt am Main"],
+  ["70173","Stuttgart"],["40212","Düsseldorf"],["04109","Leipzig"],["44135","Dortmund"],["45127","Essen"],
+  ["28195","Bremen"],["30159","Hannover"],["90402","Nürnberg"],["47051","Duisburg"],["24103","Kiel"],
+  ["01067","Dresden"],["44799","Bochum"],["42103","Wuppertal"],["33602","Bielefeld"],["53111","Bonn"],
+];
+const STRASSEN = ["Hauptstr.","Bahnhofstr.","Marktplatz","Lindenweg","Königsallee","Ludwigstr.","Reeperbahn","Gartenstr.","Kirchweg","Schulstr.","Rathausplatz","Am Park","Ringstr.","Poststr.","Mühlenweg"];
+
+async function deleteAllUsers(svc: any, filter: (email: string) => boolean) {
+  let page = 1;
+  while (true) {
+    const { data } = await svc.auth.admin.listUsers({ page, perPage: 200 });
+    const users = data?.users ?? [];
+    if (users.length === 0) break;
+    const toDelete = users.filter((u: any) => u.email && filter(u.email));
+    for (const u of toDelete) await svc.auth.admin.deleteUser(u.id);
+    if (users.length < 200) break;
+    page++;
+  }
+}
+
+async function chunkedInsert(svc: any, table: string, rows: any[], chunk = 500) {
+  for (let i = 0; i < rows.length; i += chunk) {
+    const slice = rows.slice(i, i + chunk);
+    const { error } = await svc.from(table).insert(slice);
+    if (error) throw new Error(`insert ${table} chunk ${i}: ${error.message}`);
+  }
 }
 
 Deno.serve(async (req) => {
@@ -32,188 +76,274 @@ Deno.serve(async (req) => {
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const svc = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-    // ---- 1. Wipe old demo data (only demo mandanten) ----
-    // We tag demo mandanten via notizen prefix "[DEMO]"
+    // ---- 1. Cleanup old demo data ----
     const { data: oldMandanten } = await svc.from("mandanten").select("id").ilike("notizen", "[DEMO]%");
     const oldIds = (oldMandanten ?? []).map((m: any) => m.id);
     if (oldIds.length > 0) {
+      // fetch buchhaltung ids
       const { data: oldBh } = await svc.from("buchhaltungen").select("id").in("mandant_id", oldIds);
       const bhIds = (oldBh ?? []).map((b: any) => b.id);
-      if (bhIds.length > 0) {
-        await svc.from("belegeingaenge").delete().in("buchhaltung_id", bhIds);
-        await svc.from("buchhaltung_co_bearbeiter").delete().in("buchhaltung_id", bhIds);
-        await svc.from("kommentare").delete().in("buchhaltung_id", bhIds);
-        await svc.from("benachrichtigungen").delete().in("buchhaltung_id", bhIds);
-        await svc.from("buchhaltungen").delete().in("id", bhIds);
+      // delete in chunks to avoid huge IN clauses
+      const chunkIds = <T>(arr: T[], n = 200) => {
+        const out: T[][] = []; for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n)); return out;
+      };
+      for (const c of chunkIds(bhIds)) {
+        await svc.from("belegeingaenge").delete().in("buchhaltung_id", c);
+        await svc.from("buchhaltung_co_bearbeiter").delete().in("buchhaltung_id", c);
+        await svc.from("kommentare").delete().in("buchhaltung_id", c);
+        await svc.from("benachrichtigungen").delete().in("buchhaltung_id", c);
+        await svc.from("buchhaltungen").delete().in("id", c);
       }
-      await svc.from("mandanten").delete().in("id", oldIds);
+      for (const c of chunkIds(oldIds)) {
+        await svc.from("mandanten").delete().in("id", c);
+      }
     }
 
-    // ---- 2. Remove old Taxom-era demo users so no @taxom-demo.de accounts remain ----
-    const { data: userList } = await svc.auth.admin.listUsers({ page: 1, perPage: 1000 });
-    const oldTaxomUsers = (userList?.users ?? []).filter((u) => u.email?.endsWith("@taxom-demo.de"));
-    for (const u of oldTaxomUsers) {
-      await svc.auth.admin.deleteUser(u.id);
-    }
+    // Remove old demo auth users (@pewand-demo.de & @taxom-demo.de)
+    await deleteAllUsers(svc, (email) => email.endsWith("@pewand-demo.de") || email.endsWith("@taxom-demo.de"));
 
-    // ---- 3. Create/ensure demo users ----
+    // ---- 2. Ensure role users ----
     const userIds: Record<string, string> = {};
-    for (const u of DEMO_USERS) {
-      // Try to find existing
-      const { data: list } = await svc.auth.admin.listUsers({ page: 1, perPage: 200 });
-      let existing = list?.users.find((x) => x.email === u.email);
-      if (!existing) {
-        const { data: created, error } = await svc.auth.admin.createUser({
-          email: u.email,
-          password: DEMO_PASSWORD,
-          email_confirm: true,
-          user_metadata: { name: u.name },
-        });
-        if (error || !created.user) return j(500, { step: "createUser", email: u.email, error: error?.message });
-        existing = created.user;
-      } else {
-        // ensure password is the demo password
-        await svc.auth.admin.updateUserById(existing.id, { password: DEMO_PASSWORD });
-      }
-      userIds[u.rolle] = existing.id;
-      // ensure role
-      await svc.from("user_roles").delete().eq("user_id", existing.id);
-      await svc.from("user_roles").insert({ user_id: existing.id, role: u.rolle });
-      // ensure benutzer row
+    for (const u of ROLE_USERS) {
+      const { data: created, error } = await svc.auth.admin.createUser({
+        email: u.email, password: DEMO_PASSWORD, email_confirm: true, user_metadata: { name: u.name },
+      });
+      if (error || !created.user) return j(500, { step: "createRoleUser", email: u.email, error: error?.message });
+      userIds[u.rolle] = created.user.id;
+      await svc.from("user_roles").delete().eq("user_id", created.user.id);
+      await svc.from("user_roles").insert({ user_id: created.user.id, role: u.rolle });
       await svc.from("benutzer").upsert(
-        { user_id: existing.id, name: u.name, email: u.email },
+        { user_id: created.user.id, name: u.name, email: u.email },
         { onConflict: "user_id" },
       );
     }
 
-    // Resolve benutzer.id
-    const benutzerIds: Record<string, string> = {};
-    for (const rolle of Object.keys(userIds)) {
-      const { data } = await svc.from("benutzer").select("id").eq("user_id", userIds[rolle]).maybeSingle();
-      benutzerIds[rolle] = data!.id;
+    // ---- 3. Create 10 Sachbearbeiter ----
+    const sbBenutzerIds: string[] = [];
+    for (let i = 0; i < SACHBEARBEITER.length; i++) {
+      const name = SACHBEARBEITER[i];
+      const email = `sb${String(i + 1).padStart(2, "0")}@pewand-demo.de`;
+      const { data: created, error } = await svc.auth.admin.createUser({
+        email, password: DEMO_PASSWORD, email_confirm: true, user_metadata: { name },
+      });
+      if (error || !created.user) return j(500, { step: "createSb", email, error: error?.message });
+      await svc.from("user_roles").delete().eq("user_id", created.user.id);
+      await svc.from("user_roles").insert({ user_id: created.user.id, role: "Sachbearbeiter" });
+      await svc.from("benutzer").upsert(
+        { user_id: created.user.id, name, email }, { onConflict: "user_id" },
+      );
+      const { data: b } = await svc.from("benutzer").select("id").eq("user_id", created.user.id).maybeSingle();
+      sbBenutzerIds.push(b!.id);
     }
-    const sachbearbeiterBid = benutzerIds["Sachbearbeiter"];
-    const chefBid = benutzerIds["Chef"];
 
-    // ---- 4. Seed Mandanten ----
-    const mandantenSeed = [
-      { name: "Bäckerei Krause GmbH", firma: "Bäckerei Krause GmbH", vorname: "Peter", nachname: "Krause",
-        unternehmensform: "GmbH", strasse: "Hauptstr. 12", plz: "10115", ort: "Berlin",
-        telefon: "030-12345678", email: "info@baeckerei-krause.de",
-        steuernummer: "12/345/67890", umsatzsteuer_id: "DE123456789", dauerfristverlaengerung: true },
-      { name: "Meier Consulting", firma: "Meier Consulting e.K.", vorname: "Anna", nachname: "Meier",
-        unternehmensform: "Einzelunternehmen", strasse: "Königsallee 44", plz: "40212", ort: "Düsseldorf",
-        telefon: "0211-9876543", email: "a.meier@meier-consulting.de",
-        steuernummer: "13/456/78901", dauerfristverlaengerung: false },
-      { name: "Dr. Weber Zahnarztpraxis", firma: "Zahnarztpraxis Dr. Weber", vorname: "Michael", nachname: "Weber",
-        unternehmensform: "Freiberufler", strasse: "Ludwigstr. 8", plz: "80539", ort: "München",
-        telefon: "089-2233445", email: "praxis@dr-weber.de",
-        steuernummer: "143/567/89012" },
-      { name: "TechStart UG", firma: "TechStart UG (haftungsbeschränkt)", vorname: "Julia", nachname: "Schmidt",
-        unternehmensform: "UG", strasse: "Reeperbahn 100", plz: "20359", ort: "Hamburg",
-        telefon: "040-5566778", email: "julia@techstart.io",
-        steuernummer: "22/123/45678", umsatzsteuer_id: "DE987654321", dauerfristverlaengerung: true },
-      { name: "Restaurant La Vita", firma: "La Vita GmbH & Co. KG", vorname: "Marco", nachname: "Rossi",
-        unternehmensform: "GmbH & Co. KG", strasse: "Marktplatz 3", plz: "70173", ort: "Stuttgart",
-        telefon: "0711-4433221", email: "info@la-vita.de",
-        steuernummer: "97/234/56789" },
-      { name: "Fitness Studio Nord", firma: "Fitness Nord GmbH", vorname: "Sven", nachname: "Larsen",
-        unternehmensform: "GmbH", strasse: "Nordbahnhofstr. 22", plz: "24103", ort: "Kiel",
-        telefon: "0431-7788990", email: "kontakt@fitness-nord.de",
-        steuernummer: "20/345/67890", umsatzsteuer_id: "DE234567891", dauerfristverlaengerung: true },
-      { name: "Handwerk Fischer", firma: "Fischer Sanitär & Heizung", vorname: "Thomas", nachname: "Fischer",
-        unternehmensform: "Einzelunternehmen", strasse: "Lindenweg 5", plz: "50667", ort: "Köln",
-        telefon: "0221-3344556", email: "buero@fischer-handwerk.de",
-        steuernummer: "215/456/78901" },
-    ];
+    // Resolve role benutzer.id (role Sachbearbeiter default demo user for kommentare)
+    const { data: mainSb } = await svc.from("benutzer").select("id").eq("user_id", userIds["Sachbearbeiter"]).maybeSingle();
+    const mainSbBid = mainSb!.id;
+    const { data: chefB } = await svc.from("benutzer").select("id").eq("user_id", userIds["Chef"]).maybeSingle();
+    const chefBid = chefB!.id;
+    const { data: sekB } = await svc.from("benutzer").select("id").eq("user_id", userIds["Sekretariat"]).maybeSingle();
+    const sekBid = sekB!.id;
 
-    const mandantenIds: string[] = [];
-    for (const m of mandantenSeed) {
-      const { data, error } = await svc.from("mandanten").insert({
-        ...m,
+    // All bearbeiter available for co-bearbeiter (10 sb + main demo sachbearbeiter)
+    const allSbBids = [...sbBenutzerIds, mainSbBid];
+
+    // ---- 4. Generate 150 Mandanten ----
+    const mandantenRows: any[] = [];
+    for (let i = 0; i < 150; i++) {
+      const vorname = pick(VORNAMEN);
+      const nachname = pick(NACHNAMEN);
+      const rechtsform = pick(RECHTSFORMEN);
+      const [plz, ort] = pick(STAEDTE);
+      const firma = rechtsform === "Freiberufler" || rechtsform === "Einzelunternehmen"
+        ? `${nachname} ${pick(FIRMEN_PREFIX)}`
+        : `${pick(FIRMEN_PREFIX)} ${pick(FIRMEN_SUFFIX)} ${rechtsform}`;
+      const sbId = sbBenutzerIds[i % sbBenutzerIds.length];
+      mandantenRows.push({
+        name: firma,
+        firma,
+        vorname, nachname,
+        unternehmensform: rechtsform,
+        strasse: `${pick(STRASSEN)} ${randInt(1, 199)}`,
+        plz, ort,
+        telefon: `0${randInt(151, 179)}-${randInt(1000000, 9999999)}`,
+        email: `kontakt${i + 1}@${nachname.toLowerCase().replace(/[^a-z]/g, "")}-demo.de`,
+        steuernummer: `${randInt(10, 99)}/${randInt(100, 999)}/${randInt(10000, 99999)}`,
+        umsatzsteuer_id: rand() > 0.5 ? `DE${randInt(100000000, 999999999)}` : null,
+        dauerfristverlaengerung: rand() > 0.5,
         notizen: "[DEMO] Beispiel-Mandant für die Live-Demo.",
-        zugewiesener_bearbeiter_id: sachbearbeiterBid,
-      }).select("id").single();
-      if (error) return j(500, { step: "insertMandant", name: m.name, error: error.message });
-      mandantenIds.push(data.id);
+        zugewiesener_bearbeiter_id: sbId,
+      });
     }
 
-    // ---- 5. Seed Buchhaltungen per mandant (multiple months, mixed status) ----
-    const monate = ["01-2026", "02-2026", "03-2026", "04-2026", "05-2026"];
-    // status per month (last month varies per mandant to create variety)
-    const statuses: Array<"Buchhaltung erledigt" | "In Prüfung" | "In Bearbeitung" | "Warten auf Mandant" | "Eingegangen"> = [
-      "Buchhaltung erledigt",
-      "In Prüfung",
-      "In Bearbeitung",
-      "Warten auf Mandant",
-      "Eingegangen",
-    ];
-
-    let insertedBh = 0;
-    for (let mi = 0; mi < mandantenIds.length; mi++) {
-      const mid = mandantenIds[mi];
-      for (let i = 0; i < monate.length; i++) {
-        // First 3 months: erledigt. Then vary.
-        let status: any;
-        if (i < 3) status = "Buchhaltung erledigt";
-        else if (i === 3) status = statuses[(mi + 1) % statuses.length];
-        else status = statuses[(mi + 3) % statuses.length];
-
-        const zurueckgewiesen = mi === 0 && i === 4;
-        if (zurueckgewiesen) status = "In Bearbeitung";
-
-        const [mm, yyyy] = monate[i].split("-");
-        const fertiggestellt = status === "Buchhaltung erledigt" ? `${yyyy}-${mm}-28` : null;
-
-        const { data: bh, error: bhErr } = await svc.from("buchhaltungen").insert({
-          mandant_id: mid,
-          bearbeiter_id: sachbearbeiterBid,
-          monat: monate[i],
-          status,
-          fertiggestellt_datum: fertiggestellt,
-          notizen: status === "In Bearbeitung" && zurueckgewiesen
-            ? "Bitte den Umsatz-Beleg aus KW 3 nachreichen — fehlt in den Unterlagen."
-            : null,
-          zurueckgewiesen_am: zurueckgewiesen ? new Date().toISOString() : null,
-        }).select("id").single();
-        if (bhErr) return j(500, { step: "insertBH", error: bhErr.message });
-        insertedBh++;
-
-        // Belegeingänge — als Referenz-Dokumentation
-        const belege = [
-          { datum: `${yyyy}-${mm}-05`, notiz: "Kontoauszug + Rechnungen per E-Mail" },
-          { datum: `${yyyy}-${mm}-15`, notiz: "Kassenbelege abgegeben" },
-        ];
-        for (const b of belege) {
-          await svc.from("belegeingaenge").insert({
-            buchhaltung_id: bh.id, datum: b.datum, notiz: b.notiz, erstellt_von: sachbearbeiterBid,
-          });
-        }
-
-        // Kommentare für "In Prüfung"
-        if (status === "In Prüfung") {
-          await svc.from("kommentare").insert({
-            buchhaltung_id: bh.id, user_id: userIds["Sachbearbeiter"],
-            kommentar: "Belege sind komplett — bitte prüfen und freigeben.",
-          });
-        }
+    // Insert mandanten in chunks and collect ids
+    const mandantenInfo: Array<{ id: string; sbId: string; dfv: boolean }> = [];
+    for (let i = 0; i < mandantenRows.length; i += 100) {
+      const slice = mandantenRows.slice(i, i + 100);
+      const { data, error } = await svc.from("mandanten").insert(slice).select("id, zugewiesener_bearbeiter_id, dauerfristverlaengerung");
+      if (error) return j(500, { step: "insertMandanten", error: error.message });
+      for (const row of data!) {
+        mandantenInfo.push({ id: row.id, sbId: row.zugewiesener_bearbeiter_id, dfv: row.dauerfristverlaengerung });
       }
     }
 
+    // ---- 5. Build Buchhaltungen ----
+    const buchhaltungRows: any[] = [];
+    // Track per mandant which months already used
+    const usedMonths: Record<string, Set<string>> = {};
+    const monthKey = (y: number, m: number) => `${String(m).padStart(2, "0")}-${y}`;
 
-    // Benachrichtigung an chef & sekretariat als Beispiel
+    // Pool of erledigt months: Jan 2024 through Aug 2025 (20 months)
+    const erledigtMonths: Array<[number, number]> = [];
+    for (let y = 2024; y <= 2025; y++) {
+      const maxM = y === 2025 ? 8 : 12;
+      for (let m = 1; m <= maxM; m++) erledigtMonths.push([y, m]);
+    }
+
+    // 550 erledigt: distribute ~3-4 per mandant. Assign months by taking mandant index offset.
+    let erledigtTarget = 550;
+    // Give each mandant floor(550/150)=3 erledigt, then remainder gets +1
+    const perMandantErledigt = Array(150).fill(3);
+    for (let i = 0; i < erledigtTarget - 3 * 150; i++) perMandantErledigt[i] += 1;
+
+    for (let mi = 0; mi < 150; mi++) {
+      const m = mandantenInfo[mi];
+      usedMonths[m.id] = new Set();
+      const count = perMandantErledigt[mi];
+      // Pick `count` different months from erledigtMonths, starting from a rotating offset
+      for (let k = 0; k < count; k++) {
+        const idx = (mi * 3 + k) % erledigtMonths.length;
+        const [y, mo] = erledigtMonths[idx];
+        const key = monthKey(y, mo);
+        if (usedMonths[m.id].has(key)) continue;
+        usedMonths[m.id].add(key);
+        const fertig = new Date(y, mo, 20 + randInt(0, 7)); // month+1, day 20-27
+        buchhaltungRows.push({
+          mandant_id: m.id,
+          bearbeiter_id: m.sbId,
+          monat: key,
+          status: "Buchhaltung erledigt",
+          fertiggestellt_datum: fertig.toISOString().split("T")[0],
+          dauerfristverlaengerung: m.dfv,
+          faellig_am_manuell: false,
+        });
+      }
+    }
+
+    // 20 überzogen: pick 20 mandants, month 2025-09/10/11, faellig_am in past, status
+    const overdueStatuses = ["In Bearbeitung", "Warten auf Mandant"];
+    const overdueMonths: Array<[number, number]> = [[2025, 9], [2025, 10], [2025, 11], [2025, 12]];
+    for (let i = 0; i < 20; i++) {
+      const m = mandantenInfo[i * 7 % 150];
+      const [y, mo] = overdueMonths[i % overdueMonths.length];
+      const key = monthKey(y, mo);
+      if (usedMonths[m.id].has(key)) continue;
+      usedMonths[m.id].add(key);
+      // faellig ~40-120 days in past
+      const overdueDate = new Date();
+      overdueDate.setDate(overdueDate.getDate() - randInt(40, 120));
+      buchhaltungRows.push({
+        mandant_id: m.id,
+        bearbeiter_id: m.sbId,
+        monat: key,
+        status: overdueStatuses[i % 2],
+        dauerfristverlaengerung: m.dfv,
+        faellig_am: overdueDate.toISOString().split("T")[0],
+        faellig_am_manuell: true,
+        notizen: i % 2 === 1 ? "Belege für diesen Monat noch nicht vollständig — Mandant wurde angeschrieben." : null,
+      });
+    }
+
+    // 100 offen (noch Zeit): month 2026-04/05/06, various statuses
+    const openStatuses = ["Eingegangen", "In Bearbeitung", "In Bearbeitung", "In Prüfung"];
+    const openMonths: Array<[number, number]> = [[2026, 4], [2026, 5], [2026, 6]];
+    for (let i = 0; i < 100; i++) {
+      const m = mandantenInfo[(i * 11 + 3) % 150];
+      const [y, mo] = openMonths[i % openMonths.length];
+      const key = monthKey(y, mo);
+      if (usedMonths[m.id].has(key)) continue;
+      usedMonths[m.id].add(key);
+      buchhaltungRows.push({
+        mandant_id: m.id,
+        bearbeiter_id: m.sbId,
+        monat: key,
+        status: openStatuses[i % openStatuses.length],
+        dauerfristverlaengerung: m.dfv,
+        faellig_am_manuell: false,
+      });
+    }
+
+    // Insert buchhaltungen in chunks and collect ids + info for follow-ups
+    const insertedBh: Array<{ id: string; sbId: string; status: string }> = [];
+    for (let i = 0; i < buchhaltungRows.length; i += 300) {
+      const slice = buchhaltungRows.slice(i, i + 300);
+      const { data, error } = await svc.from("buchhaltungen").insert(slice).select("id, bearbeiter_id, status");
+      if (error) return j(500, { step: "insertBH", offset: i, error: error.message });
+      for (const row of data!) insertedBh.push({ id: row.id, sbId: row.bearbeiter_id, status: row.status });
+    }
+
+    // ---- 6. Belegeingänge (1-2 per buchhaltung) ----
+    const belegRows: any[] = [];
+    for (const bh of insertedBh) {
+      const anzahl = randInt(1, 2);
+      for (let k = 0; k < anzahl; k++) {
+        const d = new Date();
+        d.setDate(d.getDate() - randInt(10, 200));
+        belegRows.push({
+          buchhaltung_id: bh.id,
+          datum: d.toISOString().split("T")[0],
+          notiz: pick(["Kontoauszüge per E-Mail", "Kassenbelege abgegeben", "Rechnungen digital eingereicht", "Belege in Kanzlei abgegeben"]),
+          erstellt_von: bh.sbId,
+        });
+      }
+    }
+    await chunkedInsert(svc, "belegeingaenge", belegRows, 500);
+
+    // ---- 7. Kommentare für "In Prüfung" ----
+    const kommentarRows: any[] = [];
+    for (const bh of insertedBh) {
+      if (bh.status === "In Prüfung") {
+        kommentarRows.push({
+          buchhaltung_id: bh.id, user_id: bh.sbId,
+          kommentar: "Belege sind komplett — bitte prüfen und freigeben.",
+        });
+      }
+    }
+    if (kommentarRows.length > 0) await chunkedInsert(svc, "kommentare", kommentarRows, 500);
+
+    // ---- 8. Co-Bearbeiter für 12 Buchhaltungen ----
+    const coRows: any[] = [];
+    const coCount = 12;
+    for (let i = 0; i < coCount; i++) {
+      const bh = insertedBh[(i * 37 + 5) % insertedBh.length];
+      // choose different sb
+      const others = allSbBids.filter((x) => x !== bh.sbId);
+      const co = others[i % others.length];
+      coRows.push({ buchhaltung_id: bh.id, bearbeiter_id: co, zugewiesen_von: chefBid });
+    }
+    // dedupe
+    const seen = new Set<string>();
+    const dedupCo = coRows.filter((r) => {
+      const k = `${r.buchhaltung_id}:${r.bearbeiter_id}`;
+      if (seen.has(k)) return false; seen.add(k); return true;
+    });
+    if (dedupCo.length > 0) await chunkedInsert(svc, "buchhaltung_co_bearbeiter", dedupCo, 100);
+
+    // ---- 9. Willkommens-Benachrichtigungen ----
     await svc.from("benachrichtigungen").insert([
       { empfaenger_id: chefBid, typ: "in_pruefung", titel: "Willkommen im Chef-Bereich",
         nachricht: "Hier siehst du alle Buchhaltungen, die zur Prüfung anstehen." },
-      { empfaenger_id: benutzerIds["Sekretariat"], typ: "warten_auf_mandant", titel: "Willkommen im Sekretariat",
+      { empfaenger_id: sekBid, typ: "warten_auf_mandant", titel: "Willkommen im Sekretariat",
         nachricht: "Kontaktiere Mandanten, deren Belege noch fehlen." },
     ]);
 
     return j(200, {
       ok: true,
-      users: userIds,
-      mandanten: mandantenIds.length,
-      buchhaltungen: insertedBh,
+      sachbearbeiter: sbBenutzerIds.length,
+      mandanten: mandantenInfo.length,
+      buchhaltungen: insertedBh.length,
+      erledigt: insertedBh.filter((b) => b.status === "Buchhaltung erledigt").length,
+      offen: insertedBh.filter((b) => b.status !== "Buchhaltung erledigt").length,
+      co_bearbeiter: dedupCo.length,
     });
 
   } catch (e) {
