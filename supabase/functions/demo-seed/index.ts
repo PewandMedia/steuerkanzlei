@@ -302,14 +302,10 @@ Deno.serve(async (req) => {
     const kommentarRows: any[] = [];
     for (const bh of insertedBh) {
       if (bh.status === "In Prüfung") {
-        // find user_id from benutzer id
-        const { data: b } = await svc.from("benutzer").select("user_id").eq("id", bh.sbId).maybeSingle();
-        if (b?.user_id) {
-          kommentarRows.push({
-            buchhaltung_id: bh.id, user_id: b.user_id,
-            kommentar: "Belege sind komplett — bitte prüfen und freigeben.",
-          });
-        }
+        kommentarRows.push({
+          buchhaltung_id: bh.id, user_id: bh.sbId,
+          kommentar: "Belege sind komplett — bitte prüfen und freigeben.",
+        });
       }
     }
     if (kommentarRows.length > 0) await chunkedInsert(svc, "kommentare", kommentarRows, 500);
