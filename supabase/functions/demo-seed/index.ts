@@ -135,6 +135,7 @@ Deno.serve(async (req) => {
         : `${pick(FIRMEN_PREFIX)} ${pick(FIRMEN_SUFFIX)} ${rechtsform}`;
       const sbId = mainSbBid;
       mandantenRows.push({
+        mandanten_nummer: `M-${i + 1}`,
         name: firma,
         firma,
         vorname, nachname,

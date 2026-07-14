@@ -101,6 +101,12 @@ export default function MeineMandanten() {
         erledigte_count: erledigteCounts.get(m.id) ?? 0,
       }));
 
+      const numOf = (nr: string | null | undefined) => {
+        const m = nr?.match(/(\d+)/);
+        return m ? parseInt(m[1], 10) : Number.MAX_SAFE_INTEGER;
+      };
+      all.sort((a, b) => numOf(a.mandanten_nummer) - numOf(b.mandanten_nummer));
+
       setMandanten(all);
       setBearbeiter(benutzerData as Bearbeiter[]);
       setLoading(false);
