@@ -134,9 +134,7 @@ export default function Dashboard() {
           ? d.co.map((c: any) => c.bearbeiter).filter(Boolean)
           : [],
         belegeingaenge: Array.isArray(d.belegeingaenge)
-          ? [...d.belegeingaenge]
-              .map((e: any) => ({ id: e.id, datum: e.datum, notiz: e.notiz ?? null }))
-              .sort((a, b) => a.datum.localeCompare(b.datum))
+          ? d.belegeingaenge.map((e: any) => ({ id: e.id, datum: "", notiz: null }))
           : [],
         gruppen_id: d.gruppen_id ?? null,
         };
