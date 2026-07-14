@@ -286,17 +286,13 @@ Deno.serve(async (req) => {
     }
     if (kommentarRows.length > 0) await chunkedInsert(svc, "kommentare", kommentarRows, 500);
 
-    // ---- 8. Co-Bearbeiter für 12 Buchhaltungen ----
+    // ---- 8. Co-Bearbeiter für 12 Buchhaltungen (Chef als Zweitbearbeiter) ----
     const coRows: any[] = [];
     const coCount = 12;
     for (let i = 0; i < coCount; i++) {
       const bh = insertedBh[(i * 37 + 5) % insertedBh.length];
-      // choose different sb
-      const others = allSbBids.filter((x) => x !== bh.sbId);
-      const co = others[i % others.length];
-      coRows.push({ buchhaltung_id: bh.id, bearbeiter_id: co, zugewiesen_von: chefBid });
+      coRows.push({ buchhaltung_id: bh.id, bearbeiter_id: chefBid, zugewiesen_von: chefBid });
     }
-    // dedupe
     const seen = new Set<string>();
     const dedupCo = coRows.filter((r) => {
       const k = `${r.buchhaltung_id}:${r.bearbeiter_id}`;
@@ -314,7 +310,7 @@ Deno.serve(async (req) => {
 
     return j(200, {
       ok: true,
-      sachbearbeiter: sbBenutzerIds.length,
+      sachbearbeiter: 1,
       mandanten: mandantenInfo.length,
       buchhaltungen: insertedBh.length,
       erledigt: insertedBh.filter((b) => b.status === "Buchhaltung erledigt").length,
