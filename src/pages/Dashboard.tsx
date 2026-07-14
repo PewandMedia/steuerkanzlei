@@ -94,15 +94,7 @@ export default function Dashboard() {
     if (rolle === "Sachbearbeiter") setNurMeine(true);
   }, [rolle]);
 
-  const fetchData = async (opts?: { force?: boolean }) => {
-    const cacheKey = "dashboard:buchhaltungen";
-    if (!opts?.force) {
-      const cached = getCached<any[]>(cacheKey);
-      if (cached) {
-        setBuchhaltungen(cached as any);
-        return;
-      }
-    }
+  const fetchData = async () => {
     let data: any[] = [];
     try {
       data = await fetchAll<any>((from, to) =>
