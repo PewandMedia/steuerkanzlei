@@ -120,6 +120,8 @@ export default function MeineMandanten() {
 
       setMandanten(all);
       setBearbeiter(benutzerData as Bearbeiter[]);
+      setCached("meine-mandanten:cards", all);
+      setCached("meine-mandanten:bearbeiter", benutzerData as Bearbeiter[]);
       setLoading(false);
     };
     load();
