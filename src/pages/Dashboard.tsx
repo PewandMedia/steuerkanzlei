@@ -142,15 +142,7 @@ export default function Dashboard() {
     setBuchhaltungen(mapped as any);
   };
 
-  const fetchMandanten = async (opts?: { force?: boolean }) => {
-    const cacheKey = "dashboard:mandanten";
-    if (!opts?.force) {
-      const cached = getCached<any[]>(cacheKey);
-      if (cached) {
-        setMandanten(cached as any);
-        return;
-      }
-    }
+  const fetchMandanten = async () => {
     let data: any[] = [];
     try {
       data = await fetchAll<any>((from, to) =>
