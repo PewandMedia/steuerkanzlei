@@ -13,6 +13,7 @@ import { usePaginatedList } from "@/hooks/use-paginated-list";
 import { PaginationFooter } from "@/components/PaginationFooter";
 import { usePageSize } from "@/hooks/use-page-size";
 import { fetchAll } from "@/lib/fetch-all";
+import { getCached, setCached } from "@/lib/simple-cache";
 
 interface MandantCard {
   id: string;
