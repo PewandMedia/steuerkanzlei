@@ -13,6 +13,7 @@ import { usePaginatedList } from "@/hooks/use-paginated-list";
 import { PaginationFooter } from "@/components/PaginationFooter";
 import { usePageSize } from "@/hooks/use-page-size";
 import { fetchAll } from "@/lib/fetch-all";
+import { getCached, setCached } from "@/lib/simple-cache";
 
 interface MandantCard {
   id: string;
@@ -47,8 +48,18 @@ export default function MeineMandanten() {
 
   useEffect(() => {
     if (authLoading || !rolle) return;
+
+    // Sofort aus Cache hydratisieren, damit Wechsel zwischen Seiten instant ist.
+    const cachedMand = getCached<MandantCard[]>("meine-mandanten:cards");
+    const cachedBearb = getCached<Bearbeiter[]>("meine-mandanten:bearbeiter");
+    if (cachedMand) {
+      setMandanten(cachedMand);
+      if (cachedBearb) setBearbeiter(cachedBearb);
+      setLoading(false);
+    }
+
     const load = async () => {
-      setLoading(true);
+      if (!cachedMand) setLoading(true);
       const [mandantenData, buchhaltungenData, benutzerData] = await Promise.all([
         fetchAll<any>((from, to) =>
           supabase
@@ -109,6 +120,8 @@ export default function MeineMandanten() {
 
       setMandanten(all);
       setBearbeiter(benutzerData as Bearbeiter[]);
+      setCached("meine-mandanten:cards", all);
+      setCached("meine-mandanten:bearbeiter", benutzerData as Bearbeiter[]);
       setLoading(false);
     };
     load();

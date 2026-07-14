@@ -36,6 +36,7 @@ import { usePaginatedList } from "@/hooks/use-paginated-list";
 import { PaginationFooter } from "@/components/PaginationFooter";
 import { usePageSize } from "@/hooks/use-page-size";
 import { fetchAll } from "@/lib/fetch-all";
+import { getCached, setCached } from "@/lib/simple-cache";
 import { useFocusRow } from "@/hooks/use-focus-row";
 
 type BuchhaltungStatus = Database["public"]["Enums"]["buchhaltung_status"];
@@ -79,6 +80,7 @@ export default function Dashboard() {
   const [suche, setSuche] = useState("");
   const [sortierung, setSortierung] = useState<"prioritaet" | "frist" | "mandant" | "erstellt">("prioritaet");
   const [nurMeine, setNurMeine] = useState(false);
+  const [zeigeErledigte, setZeigeErledigte] = useState(false);
   const [mandanten, setMandanten] = useState<{ id: string; name: string; firma: string | null; zugewiesener_bearbeiter_id: string | null; dauerfristverlaengerung: boolean }[]>([]);
   const [editingBuchhaltung, setEditingBuchhaltung] = useState<BuchhaltungRow | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -98,7 +100,7 @@ export default function Dashboard() {
       data = await fetchAll<any>((from, to) =>
         supabase
           .from("buchhaltungen")
-          .select("id, monat, status, belegeingang_datum, fertiggestellt_datum, abgabe_datum, faellig_am, faellig_am_manuell, dauerfristverlaengerung, zurueckgewiesen_am, notizen, bearbeiter_id, mandant_id, gruppen_id, mandant:mandanten(id, mandanten_nummer, name, firma, telefon, email), bearbeiter:benutzer!buchhaltungen_bearbeiter_id_fkey(name), buchhaltung_dokumente(id), co:buchhaltung_co_bearbeiter(bearbeiter:benutzer!buchhaltung_co_bearbeiter_bearbeiter_id_fkey(id, name)), belegeingaenge(id, datum, notiz)")
+          .select("id, monat, status, belegeingang_datum, fertiggestellt_datum, abgabe_datum, faellig_am, faellig_am_manuell, dauerfristverlaengerung, zurueckgewiesen_am, notizen, bearbeiter_id, mandant_id, gruppen_id, mandant:mandanten(id, mandanten_nummer, name, firma, telefon, email), bearbeiter:benutzer!buchhaltungen_bearbeiter_id_fkey(name), buchhaltung_dokumente(id), co:buchhaltung_co_bearbeiter(bearbeiter:benutzer!buchhaltung_co_bearbeiter_bearbeiter_id_fkey(id, name)), belegeingaenge(id)")
           .order("erstellt_am", { ascending: false })
           .order("id", { ascending: true })
           .range(from, to) as any,
@@ -107,10 +109,9 @@ export default function Dashboard() {
       data = [];
     }
 
-    setBuchhaltungen(
-      data.map((d: any) => {
-        const docs = Array.isArray(d.buchhaltung_dokumente) ? d.buchhaltung_dokumente : [];
-        return {
+    const mapped = data.map((d: any) => {
+      const docs = Array.isArray(d.buchhaltung_dokumente) ? d.buchhaltung_dokumente : [];
+      return {
         id: d.id,
         monat: d.monat,
         status: d.status,
@@ -121,8 +122,6 @@ export default function Dashboard() {
         faellig_am_manuell: !!d.faellig_am_manuell,
         dauerfristverlaengerung: !!d.dauerfristverlaengerung,
         hat_abschluss: d.status === "Buchhaltung erledigt",
-
-        
         zurueckgewiesen_am: d.zurueckgewiesen_am ?? null,
         notizen: d.notizen,
         bearbeiter_id: d.bearbeiter_id,
@@ -134,14 +133,13 @@ export default function Dashboard() {
           ? d.co.map((c: any) => c.bearbeiter).filter(Boolean)
           : [],
         belegeingaenge: Array.isArray(d.belegeingaenge)
-          ? [...d.belegeingaenge]
-              .map((e: any) => ({ id: e.id, datum: e.datum, notiz: e.notiz ?? null }))
-              .sort((a, b) => a.datum.localeCompare(b.datum))
+          ? d.belegeingaenge.map((e: any) => ({ id: e.id, datum: "", notiz: null }))
           : [],
         gruppen_id: d.gruppen_id ?? null,
-        };
-      })
-    );
+      };
+    });
+    setCached("dashboard:buchhaltungen", mapped);
+    setBuchhaltungen(mapped as any);
   };
 
   const fetchMandanten = async () => {
@@ -158,11 +156,21 @@ export default function Dashboard() {
     } catch {
       data = [];
     }
-    setMandanten(data.map((m: any) => ({ ...m, dauerfristverlaengerung: !!m.dauerfristverlaengerung })));
+    const mapped = data.map((m: any) => ({ ...m, dauerfristverlaengerung: !!m.dauerfristverlaengerung }));
+    setCached("dashboard:mandanten", mapped);
+    setMandanten(mapped);
   };
 
-  useEffect(() => { fetchData(); }, []);
-  useEffect(() => { fetchMandanten(); }, []);
+  useEffect(() => {
+    const cached = getCached<any[]>("dashboard:buchhaltungen");
+    if (cached) setBuchhaltungen(cached as any);
+    fetchData();
+  }, []);
+  useEffect(() => {
+    const cached = getCached<any[]>("dashboard:mandanten");
+    if (cached) setMandanten(cached as any);
+    fetchMandanten();
+  }, []);
 
 
   const bearbeiterList = useMemo(() => {
@@ -175,6 +183,7 @@ export default function Dashboard() {
     const sucheLower = suche.trim().toLowerCase();
     const result = buchhaltungen.filter((b) => {
       if (statusFilter !== "all" && b.status !== statusFilter) return false;
+      if (!zeigeErledigte && statusFilter === "all" && b.status === "Buchhaltung erledigt") return false;
       if (bearbeiterFilter !== "all" && b.bearbeiter?.name !== bearbeiterFilter) return false;
       if (monatFilter && !b.monat.toLowerCase().includes(monatFilter.toLowerCase())) return false;
       if (nurMeine && benutzerId) {
@@ -229,10 +238,10 @@ export default function Dashboard() {
         }
       }
     });
-  }, [buchhaltungen, statusFilter, bearbeiterFilter, monatFilter, fristFilter, suche, sortierung, nurMeine, benutzerId]);
+  }, [buchhaltungen, statusFilter, bearbeiterFilter, monatFilter, fristFilter, suche, sortierung, nurMeine, benutzerId, zeigeErledigte]);
 
   // Pagination — initial 10, weitere per Button / Auto-Load on Scroll
-  const paginationKey = `${statusFilter}|${bearbeiterFilter}|${monatFilter}|${fristFilter}|${suche}|${sortierung}|${nurMeine}`;
+  const paginationKey = `${statusFilter}|${bearbeiterFilter}|${monatFilter}|${fristFilter}|${suche}|${sortierung}|${nurMeine}|${zeigeErledigte}`;
   const [pageSize, setPageSize] = usePageSize("pageSize:dashboard");
   const { visible: visibleRows, page, totalPages, goToPage, total: totalRows, shown: shownRows } =
     usePaginatedList(filtered, pageSize, paginationKey);
@@ -489,6 +498,10 @@ export default function Dashboard() {
         <div className="flex items-center gap-2 h-9 px-2 rounded-md border bg-card">
           <Switch id="nur-meine" checked={nurMeine} onCheckedChange={setNurMeine} />
           <Label htmlFor="nur-meine" className="text-xs cursor-pointer whitespace-nowrap">Nur meine</Label>
+        </div>
+        <div className="flex items-center gap-2 h-9 px-2 rounded-md border bg-card">
+          <Switch id="zeige-erledigte" checked={zeigeErledigte} onCheckedChange={setZeigeErledigte} />
+          <Label htmlFor="zeige-erledigte" className="text-xs cursor-pointer whitespace-nowrap">Erledigte anzeigen</Label>
         </div>
         {rolle === "Sekretariat" && (
           <div className="ml-auto">
