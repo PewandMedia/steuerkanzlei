@@ -268,6 +268,7 @@ Deno.serve(async (req) => {
         monat: key,
         status: openStatuses[i % openStatuses.length],
         dauerfristverlaengerung: m.dfv,
+        faellig_am_manuell: false,
       });
     }
 
