@@ -123,10 +123,7 @@ Deno.serve(async (req) => {
     const sekBid = sekB!.id;
 
 
-    // All bearbeiter available for co-bearbeiter (10 sb + main demo sachbearbeiter)
-    const allSbBids = [...sbBenutzerIds, mainSbBid];
-
-    // ---- 4. Generate 150 Mandanten ----
+    // ---- 4. Generate 150 Mandanten (alle Simon zugewiesen) ----
     const mandantenRows: any[] = [];
     for (let i = 0; i < 150; i++) {
       const vorname = pick(VORNAMEN);
@@ -136,7 +133,7 @@ Deno.serve(async (req) => {
       const firma = rechtsform === "Freiberufler" || rechtsform === "Einzelunternehmen"
         ? `${nachname} ${pick(FIRMEN_PREFIX)}`
         : `${pick(FIRMEN_PREFIX)} ${pick(FIRMEN_SUFFIX)} ${rechtsform}`;
-      const sbId = sbBenutzerIds[i % sbBenutzerIds.length];
+      const sbId = mainSbBid;
       mandantenRows.push({
         name: firma,
         firma,
