@@ -117,10 +117,9 @@ export default function Dashboard() {
       data = [];
     }
 
-    setBuchhaltungen(
-      data.map((d: any) => {
-        const docs = Array.isArray(d.buchhaltung_dokumente) ? d.buchhaltung_dokumente : [];
-        return {
+    const mapped = data.map((d: any) => {
+      const docs = Array.isArray(d.buchhaltung_dokumente) ? d.buchhaltung_dokumente : [];
+      return {
         id: d.id,
         monat: d.monat,
         status: d.status,
@@ -131,8 +130,6 @@ export default function Dashboard() {
         faellig_am_manuell: !!d.faellig_am_manuell,
         dauerfristverlaengerung: !!d.dauerfristverlaengerung,
         hat_abschluss: d.status === "Buchhaltung erledigt",
-
-        
         zurueckgewiesen_am: d.zurueckgewiesen_am ?? null,
         notizen: d.notizen,
         bearbeiter_id: d.bearbeiter_id,
@@ -147,12 +144,21 @@ export default function Dashboard() {
           ? d.belegeingaenge.map((e: any) => ({ id: e.id, datum: "", notiz: null }))
           : [],
         gruppen_id: d.gruppen_id ?? null,
-        };
-      })
-    );
+      };
+    });
+    setCached("dashboard:buchhaltungen", mapped);
+    setBuchhaltungen(mapped as any);
   };
 
-  const fetchMandanten = async () => {
+  const fetchMandanten = async (opts?: { force?: boolean }) => {
+    const cacheKey = "dashboard:mandanten";
+    if (!opts?.force) {
+      const cached = getCached<any[]>(cacheKey);
+      if (cached) {
+        setMandanten(cached as any);
+        return;
+      }
+    }
     let data: any[] = [];
     try {
       data = await fetchAll<any>((from, to) =>
@@ -166,7 +172,9 @@ export default function Dashboard() {
     } catch {
       data = [];
     }
-    setMandanten(data.map((m: any) => ({ ...m, dauerfristverlaengerung: !!m.dauerfristverlaengerung })));
+    const mapped = data.map((m: any) => ({ ...m, dauerfristverlaengerung: !!m.dauerfristverlaengerung }));
+    setCached("dashboard:mandanten", mapped);
+    setMandanten(mapped);
   };
 
   useEffect(() => { fetchData(); }, []);
