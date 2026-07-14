@@ -17,10 +17,6 @@ const ROLE_USERS = [
   { email: "demo-chef@pewand-demo.de", name: "Christina Chef", rolle: "Chef" },
 ] as const;
 
-const SACHBEARBEITER = [
-  "Anna Müller", "Ben Krüger", "Clara Hoffmann", "David Schulz", "Elena Wagner",
-  "Felix Becker", "Greta Schäfer", "Henry Fischer", "Isabel Weber", "Jonas Neumann",
-];
 
 function j(status: number, body: unknown) {
   return new Response(JSON.stringify(body), {
