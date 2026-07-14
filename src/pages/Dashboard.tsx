@@ -232,7 +232,7 @@ export default function Dashboard() {
   }, [buchhaltungen, statusFilter, bearbeiterFilter, monatFilter, fristFilter, suche, sortierung, nurMeine, benutzerId, zeigeErledigte]);
 
   // Pagination — initial 10, weitere per Button / Auto-Load on Scroll
-  const paginationKey = `${statusFilter}|${bearbeiterFilter}|${monatFilter}|${fristFilter}|${suche}|${sortierung}|${nurMeine}`;
+  const paginationKey = `${statusFilter}|${bearbeiterFilter}|${monatFilter}|${fristFilter}|${suche}|${sortierung}|${nurMeine}|${zeigeErledigte}`;
   const [pageSize, setPageSize] = usePageSize("pageSize:dashboard");
   const { visible: visibleRows, page, totalPages, goToPage, total: totalRows, shown: shownRows } =
     usePaginatedList(filtered, pageSize, paginationKey);
