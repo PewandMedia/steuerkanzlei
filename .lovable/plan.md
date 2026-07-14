@@ -1,31 +1,29 @@
 ## Ziel
-Dashboard und „Meine Mandanten" merklich schneller machen. Aktuell zieht das Dashboard beim Aufruf alle 670 Buchhaltungen mit 5 verschachtelten Joins (mandant, bearbeiter, dokumente, co-bearbeiter, alle Belegeingänge) in einem einzigen Request und rendert alles unmittelbar.
+`Meine Mandanten` immer nach Mandantennummer (M-1 → M-150) sortieren und die Mobilansicht (390 px) aufräumen und beschleunigen.
 
-## Änderungen
+## Änderungen in `src/pages/MeineMandanten.tsx`
 
-### 1. Dashboard-Query verschlanken (`src/pages/Dashboard.tsx`)
-- `buchhaltung_dokumente(id)` und `belegeingaenge(id, datum, notiz)` aus dem initialen Select entfernen.
-- Stattdessen in zwei kompakten Zweitabfragen nur die **Counts** laden:
-  - `buchhaltung_dokumente` → gruppiert per `buchhaltung_id`
-  - `belegeingaenge` → nur `buchhaltung_id, datum` (für Sortierung und Anzeige des jüngsten Datums reicht `belegeingang_datum`, das eh schon auf der Buchhaltungszeile liegt).
-- Die vollständige Belegeingang-Liste erst laden, wenn der Nutzer den „Belegeingänge"-Dialog öffnet (`belegeingaengeDialog`) — bereits vorhandener Trigger.
-- „+N weitere / Alle anzeigen"-Anzeige erhält nur noch den Count (aus dem Zweit-Fetch), Detailliste kommt aus dem Dialog.
+### 1. Chronologische Sortierung überall
+- Sachbearbeiter-Ansicht: aktuell wird vor dem Rendern per `.sort((a,b) => a.name.localeCompare(b.name))` alphabetisch umsortiert → entfernen. Die Liste bleibt in der bereits geladenen Reihenfolge M-1 … M-150.
+- Chef-Ansicht (`grouped`): jede Gruppe wird ebenfalls per `a.name.localeCompare(b.name)` sortiert → auf natürliche Sortierung nach `mandanten_nummer` umstellen (gleiche `numOf`-Helper-Funktion wie im initialen Load).
+- Ergebnis: In beiden Rollen zählt die Liste sichtbar M-1, M-2, M-3, …
 
-### 2. Sachbearbeiter-Standardansicht ohne Erledigte
-- Beim ersten Laden für Sachbearbeiter zusätzlich `statusFilter` so setzen, dass „Buchhaltung erledigt" nicht mit im Rendering ist (die 550 erledigten Zeilen sind der größte Renderposten). Ein Klick auf die „Erledigt"-Kachel oben blendet sie wie bisher wieder ein.
+### 2. Mobile-Layout (< 640 px)
+Karte kompakter, ohne horizontales Überlaufen:
+- Nummer-Tile schmaler auf Mobile (`h-10 w-14`, größere Größen nur ab `md`), Font-Skalierung an `nr.length` bleibt.
+- Statuspill rechts auf Mobile nur Icon + Zahl (kein „offen"-Text), damit die Zeile nicht bricht.
+- „X erledigt"-Text bleibt bereits `hidden sm:inline` — beibehalten.
+- Padding der Karte auf Mobile von `px-3 py-2.5` auf `px-2.5 py-2`, Gap `gap-2` statt `gap-3`.
+- Suchleiste: Input auf Mobile `h-11 text-sm`, Zähler-Badge bleibt `hidden sm:inline-flex`.
+- Seitenpadding von `p-6 lg:p-10` auf `p-4 sm:p-6 lg:p-10`, Card-Padding `p-3 sm:p-5`.
+- Überschrift auf Mobile `text-xl`, ab `sm` `text-2xl`.
 
-### 3. React-Query-Cache nutzen
-- `fetchData` / `fetchMandanten` auf `useQuery` umstellen (`@tanstack/react-query` ist bereits eingebunden) mit `staleTime: 60_000`. Damit wird beim Wechsel zwischen Dashboard, „Meine Mandanten" und Detailseiten kein Full-Refetch mehr ausgelöst.
-- Nach Mutationen (Status ändern, Löschen, Kontakt aktualisieren) gezielt `queryClient.invalidateQueries` statt kompletter Neuladung.
-
-### 4. `MeineMandanten` (`src/pages/MeineMandanten.tsx`)
-- Statt aller `buchhaltungen` (670 Rows) nur noch `mandant_id, status` mit `head:false` selecten — bereits der Fall — aber zusätzlich via React-Query cachen und mit Dashboard-Query teilen (gleicher `queryKey`), damit Wechseln zwischen den Seiten instant ist.
-
-### 5. Tabellen-Rendering entschlacken
-- Konstante Formatter (`new Date(...).toLocaleDateString("de-DE")` in jeder Zeile) werden per `Intl.DateTimeFormat`-Singleton außerhalb der Row-Map angelegt.
-- Der interne `useMemo` für `filtered` wird auf notwendige Deps reduziert; teure Sub-Sortierungen (z. B. Belegeingang-Array-Sort pro Row) fallen mit Punkt 1 komplett weg.
+### 3. Performance auf Mobile
+- `PaginatedList`-Default-Seitengröße: auf Mobile-Viewport (`window.matchMedia("(max-width: 640px)")`) initial 25 statt 50 Einträge — reduziert First-Paint-Kosten spürbar; Nutzer kann via Footer erhöhen (bestehender `pageSize`-Selector).
+- `renderCard` in `useCallback` verpacken und pro Zeile nur die tatsächlich benötigten Felder ableiten (kein `find()` über `bearbeiter` pro Row) → `bearbeiterMap = useMemo(new Map(bearbeiter.map(b => [b.id, b.name])))` einmalig, in `renderCard` per `.get()` nutzen. Spart bei 150 Zeilen × Rerender die O(n·m)-Lookups.
+- `filtered`-Memo behält die aktuelle Deps-Liste; die überflüssige Nachsortierung in Punkt 1 entfällt und spart pro Render einen 150-Item-Sort.
 
 ## Nicht Teil dieses Plans
-- Keine DB-Schema- oder Index-Änderungen (Indizes sind bereits gesetzt).
-- Kein Wechsel auf Server-side Pagination (bleibt clientseitig; die Datenmenge ist nach Punkt 1 kein Problem mehr).
-- Kein Redesign — nur Performance, keine sichtbaren UI-Änderungen außer dem Standardfilter für Sachbearbeiter.
+- Keine Änderung an Datenmodell, Query oder Cache (`simple-cache` bleibt).
+- Keine Redesigns der Karten außer den Mobile-Anpassungen oben.
+- Kein Eingriff in Dashboard oder andere Seiten.

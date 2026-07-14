@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -146,6 +146,16 @@ export default function MeineMandanten() {
     });
   }, [mandanten, rolle, benutzerId, search]);
 
+  const numOf = useCallback((nr: string | null | undefined) => {
+    const m = nr?.match(/(\d+)/);
+    return m ? parseInt(m[1], 10) : Number.MAX_SAFE_INTEGER;
+  }, []);
+
+  const bearbeiterMap = useMemo(
+    () => new Map(bearbeiter.map((b) => [b.id, b.name])),
+    [bearbeiter],
+  );
+
   const grouped = useMemo(() => {
     if (rolle !== "Chef") return null;
     const groups = new Map<string, MandantCard[]>();
@@ -157,19 +167,19 @@ export default function MeineMandanten() {
     return Array.from(groups.entries())
       .map(([key, items]) => ({
         key,
-        name: key === "__none__" ? "Nicht zugewiesen" : (bearbeiter.find((b) => b.id === key)?.name ?? "Unbekannt"),
-        items: items.sort((a, b) => a.name.localeCompare(b.name)),
+        name: key === "__none__" ? "Nicht zugewiesen" : (bearbeiterMap.get(key) ?? "Unbekannt"),
+        items: items.sort((a, b) => numOf(a.mandanten_nummer) - numOf(b.mandanten_nummer)),
       }))
       .sort((a, b) => {
         if (a.key === "__none__") return 1;
         if (b.key === "__none__") return -1;
         return a.name.localeCompare(b.name);
       });
-  }, [rolle, filtered, bearbeiter]);
+  }, [rolle, filtered, bearbeiterMap, numOf]);
 
-  const renderCard = (m: MandantCard) => {
+  const renderCard = useCallback((m: MandantCard) => {
     const adresse = [m.strasse, [m.plz, m.ort].filter(Boolean).join(" ")].filter((v) => v && v.trim() !== "").join(", ");
-    const sachbearbeiter = bearbeiter.find((b) => b.id === m.zugewiesener_bearbeiter_id)?.name;
+    const sachbearbeiter = m.zugewiesener_bearbeiter_id ? bearbeiterMap.get(m.zugewiesener_bearbeiter_id) : undefined;
     const offenLabel = m.offene_count === 1 ? "offene Buchhaltung" : "offene Buchhaltungen";
     const isUrgent = m.offene_count >= 3;
     const nr = m.mandanten_nummer || "—";
@@ -178,11 +188,11 @@ export default function MeineMandanten() {
       <div
         key={m.id}
         onClick={() => navigate(`/mandanten/${m.id}`, { state: { from: "/meine-mandanten" } })}
-        className="group cursor-pointer w-full rounded-lg border border-border/70 bg-card border-l-4 border-l-brand/60 hover:border-l-brand hover:shadow-[var(--shadow-card)] hover:bg-accent/30 transition-all duration-150 px-3 py-2.5"
+        className="group cursor-pointer w-full rounded-lg border border-border/70 bg-card border-l-4 border-l-brand/60 hover:border-l-brand hover:shadow-[var(--shadow-card)] hover:bg-accent/30 transition-all duration-150 px-2.5 py-2 sm:px-3 sm:py-2.5"
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Mandantennummer-Tile */}
-          <div className="shrink-0 h-12 w-20 md:w-24 rounded-md bg-brand/10 border border-brand/20 flex items-center justify-center text-brand px-1.5">
+          <div className="shrink-0 h-10 w-14 sm:h-12 sm:w-20 md:w-24 rounded-md bg-brand/10 border border-brand/20 flex items-center justify-center text-brand px-1.5">
             <span className={`font-mono font-bold leading-none whitespace-nowrap truncate ${nrSize}`}>
               {nr}
             </span>
@@ -230,7 +240,7 @@ export default function MeineMandanten() {
           </div>
 
           {/* Status rechts */}
-          <div className="shrink-0 flex items-center gap-2">
+          <div className="shrink-0 flex items-center gap-1.5 sm:gap-2">
             {sachbearbeiter && rolle === "Chef" && (
               <span className="hidden lg:inline-flex items-center gap-1 text-xs text-muted-foreground bg-muted/60 px-2 py-0.5 rounded">
                 <UserCircle2 className="h-3 w-3" />
@@ -242,10 +252,12 @@ export default function MeineMandanten() {
             </span>
             {m.offene_count > 0 ? (
               <span
-                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md border text-xs font-semibold bg-amber-50 border-amber-300 text-amber-900 ${isUrgent ? "ring-2 ring-amber-200" : ""}`}
+                className={`inline-flex items-center gap-1 px-2 py-1 sm:px-2.5 rounded-md border text-xs font-semibold bg-amber-50 border-amber-300 text-amber-900 ${isUrgent ? "ring-2 ring-amber-200" : ""}`}
+                aria-label={`${m.offene_count} ${offenLabel}`}
               >
                 <AlertCircle className="h-3.5 w-3.5" />
-                <span><span className="font-bold">{m.offene_count}</span> <span className="hidden sm:inline">{offenLabel}</span><span className="sm:hidden">offen</span></span>
+                <span className="font-bold">{m.offene_count}</span>
+                <span className="hidden sm:inline">{offenLabel}</span>
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-emerald-300 bg-emerald-50 text-emerald-800 text-xs font-medium">
@@ -258,7 +270,7 @@ export default function MeineMandanten() {
         </div>
       </div>
     );
-  };
+  }, [bearbeiterMap, navigate, rolle]);
 
   const title = rolle === "Sachbearbeiter" ? "Meine Mandanten" : "Mandanten je Sachbearbeiter";
   const totalCount = filtered.length;
@@ -276,11 +288,11 @@ export default function MeineMandanten() {
   }
 
   return (
-    <div className="p-6 lg:p-10 space-y-6 min-w-0">
+    <div className="p-4 sm:p-6 lg:p-10 space-y-4 sm:space-y-6 min-w-0">
       <div className="flex items-center gap-2">
-        <Users className="h-6 w-6 text-brand" />
-        <h1 className="text-2xl font-bold text-foreground">
-          {title} <span className="text-muted-foreground font-normal text-lg">({totalCount})</span>
+        <Users className="h-5 w-5 sm:h-6 sm:w-6 text-brand" />
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+          {title} <span className="text-muted-foreground font-normal text-base sm:text-lg">({totalCount})</span>
         </h1>
       </div>
 
@@ -288,12 +300,12 @@ export default function MeineMandanten() {
         <CardContent className="p-3 md:p-4">
           <div className="flex items-center gap-3">
             <div className="relative flex-1">
-              <Search className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Search className="h-4 w-4 sm:h-5 sm:w-5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Suche nach Name, Unternehmen, E-Mail, Telefon oder Mandantennummer…"
-                className="pl-11 h-12 text-base w-full"
+                placeholder="Suche nach Name, Nummer, Firma, E-Mail…"
+                className="pl-10 sm:pl-11 h-11 sm:h-12 text-sm sm:text-base w-full"
               />
             </div>
             <span className="hidden sm:inline-flex shrink-0 text-sm text-muted-foreground px-3 py-1.5 rounded-md bg-brand/5 border border-brand/15">
@@ -304,7 +316,7 @@ export default function MeineMandanten() {
       </Card>
 
       <Card className="card-elevated border-0 shadow-none">
-        <CardContent className="p-5">
+        <CardContent className="p-3 sm:p-5">
           {loading ? (
             <p className="text-sm text-muted-foreground text-center py-10">Lädt…</p>
           ) : totalCount === 0 ? (
@@ -314,7 +326,7 @@ export default function MeineMandanten() {
                 : "Keine Mandanten gefunden."}
             </p>
           ) : rolle === "Sachbearbeiter" ? (
-            <PaginatedList items={filtered.slice().sort((a, b) => a.name.localeCompare(b.name))} renderCard={renderCard} resetKey={search} />
+            <PaginatedList items={filtered} renderCard={renderCard} resetKey={search} />
           ) : (
             <Accordion type="multiple" defaultValue={grouped!.map((g) => g.key)} className="space-y-2">
               {grouped!.map((g) => (
