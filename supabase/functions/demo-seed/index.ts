@@ -224,6 +224,7 @@ Deno.serve(async (req) => {
           status: "Buchhaltung erledigt",
           fertiggestellt_datum: fertig.toISOString().split("T")[0],
           dauerfristverlaengerung: m.dfv,
+          faellig_am_manuell: false,
         });
       }
     }
