@@ -17,10 +17,6 @@ const ROLE_USERS = [
   { email: "demo-chef@pewand-demo.de", name: "Christina Chef", rolle: "Chef" },
 ] as const;
 
-const SACHBEARBEITER = [
-  "Anna Müller", "Ben Krüger", "Clara Hoffmann", "David Schulz", "Elena Wagner",
-  "Felix Becker", "Greta Schäfer", "Henry Fischer", "Isabel Weber", "Jonas Neumann",
-];
 
 function j(status: number, body: unknown) {
   return new Response(JSON.stringify(body), {
@@ -118,25 +114,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ---- 3. Create 10 Sachbearbeiter ----
-    const sbBenutzerIds: string[] = [];
-    for (let i = 0; i < SACHBEARBEITER.length; i++) {
-      const name = SACHBEARBEITER[i];
-      const email = `sb${String(i + 1).padStart(2, "0")}@pewand-demo.de`;
-      const { data: created, error } = await svc.auth.admin.createUser({
-        email, password: DEMO_PASSWORD, email_confirm: true, user_metadata: { name },
-      });
-      if (error || !created.user) return j(500, { step: "createSb", email, error: error?.message });
-      await svc.from("user_roles").delete().eq("user_id", created.user.id);
-      await svc.from("user_roles").insert({ user_id: created.user.id, role: "Sachbearbeiter" });
-      await svc.from("benutzer").upsert(
-        { user_id: created.user.id, name, email }, { onConflict: "user_id" },
-      );
-      const { data: b } = await svc.from("benutzer").select("id").eq("user_id", created.user.id).maybeSingle();
-      sbBenutzerIds.push(b!.id);
-    }
-
-    // Resolve role benutzer.id (role Sachbearbeiter default demo user for kommentare)
+    // ---- 3. Resolve role benutzer.id ----
     const { data: mainSb } = await svc.from("benutzer").select("id").eq("user_id", userIds["Sachbearbeiter"]).maybeSingle();
     const mainSbBid = mainSb!.id;
     const { data: chefB } = await svc.from("benutzer").select("id").eq("user_id", userIds["Chef"]).maybeSingle();
@@ -144,10 +122,8 @@ Deno.serve(async (req) => {
     const { data: sekB } = await svc.from("benutzer").select("id").eq("user_id", userIds["Sekretariat"]).maybeSingle();
     const sekBid = sekB!.id;
 
-    // All bearbeiter available for co-bearbeiter (10 sb + main demo sachbearbeiter)
-    const allSbBids = [...sbBenutzerIds, mainSbBid];
 
-    // ---- 4. Generate 150 Mandanten ----
+    // ---- 4. Generate 150 Mandanten (alle Simon zugewiesen) ----
     const mandantenRows: any[] = [];
     for (let i = 0; i < 150; i++) {
       const vorname = pick(VORNAMEN);
@@ -157,7 +133,7 @@ Deno.serve(async (req) => {
       const firma = rechtsform === "Freiberufler" || rechtsform === "Einzelunternehmen"
         ? `${nachname} ${pick(FIRMEN_PREFIX)}`
         : `${pick(FIRMEN_PREFIX)} ${pick(FIRMEN_SUFFIX)} ${rechtsform}`;
-      const sbId = sbBenutzerIds[i % sbBenutzerIds.length];
+      const sbId = mainSbBid;
       mandantenRows.push({
         name: firma,
         firma,
@@ -310,17 +286,13 @@ Deno.serve(async (req) => {
     }
     if (kommentarRows.length > 0) await chunkedInsert(svc, "kommentare", kommentarRows, 500);
 
-    // ---- 8. Co-Bearbeiter für 12 Buchhaltungen ----
+    // ---- 8. Co-Bearbeiter für 12 Buchhaltungen (Chef als Zweitbearbeiter) ----
     const coRows: any[] = [];
     const coCount = 12;
     for (let i = 0; i < coCount; i++) {
       const bh = insertedBh[(i * 37 + 5) % insertedBh.length];
-      // choose different sb
-      const others = allSbBids.filter((x) => x !== bh.sbId);
-      const co = others[i % others.length];
-      coRows.push({ buchhaltung_id: bh.id, bearbeiter_id: co, zugewiesen_von: chefBid });
+      coRows.push({ buchhaltung_id: bh.id, bearbeiter_id: chefBid, zugewiesen_von: chefBid });
     }
-    // dedupe
     const seen = new Set<string>();
     const dedupCo = coRows.filter((r) => {
       const k = `${r.buchhaltung_id}:${r.bearbeiter_id}`;
@@ -338,7 +310,7 @@ Deno.serve(async (req) => {
 
     return j(200, {
       ok: true,
-      sachbearbeiter: sbBenutzerIds.length,
+      sachbearbeiter: 1,
       mandanten: mandantenInfo.length,
       buchhaltungen: insertedBh.length,
       erledigt: insertedBh.filter((b) => b.status === "Buchhaltung erledigt").length,
