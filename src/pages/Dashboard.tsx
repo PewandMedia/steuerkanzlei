@@ -490,6 +490,10 @@ export default function Dashboard() {
           <Switch id="nur-meine" checked={nurMeine} onCheckedChange={setNurMeine} />
           <Label htmlFor="nur-meine" className="text-xs cursor-pointer whitespace-nowrap">Nur meine</Label>
         </div>
+        <div className="flex items-center gap-2 h-9 px-2 rounded-md border bg-card">
+          <Switch id="zeige-erledigte" checked={zeigeErledigte} onCheckedChange={setZeigeErledigte} />
+          <Label htmlFor="zeige-erledigte" className="text-xs cursor-pointer whitespace-nowrap">Erledigte anzeigen</Label>
+        </div>
         {rolle === "Sekretariat" && (
           <div className="ml-auto">
             <NeueBuchhaltungDialog mandanten={mandanten} onCreated={fetchData} />
