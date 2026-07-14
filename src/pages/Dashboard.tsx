@@ -229,7 +229,7 @@ export default function Dashboard() {
         }
       }
     });
-  }, [buchhaltungen, statusFilter, bearbeiterFilter, monatFilter, fristFilter, suche, sortierung, nurMeine, benutzerId]);
+  }, [buchhaltungen, statusFilter, bearbeiterFilter, monatFilter, fristFilter, suche, sortierung, nurMeine, benutzerId, zeigeErledigte]);
 
   // Pagination — initial 10, weitere per Button / Auto-Load on Scroll
   const paginationKey = `${statusFilter}|${bearbeiterFilter}|${monatFilter}|${fristFilter}|${suche}|${sortierung}|${nurMeine}`;
