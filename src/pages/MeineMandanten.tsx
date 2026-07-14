@@ -146,6 +146,16 @@ export default function MeineMandanten() {
     });
   }, [mandanten, rolle, benutzerId, search]);
 
+  const numOf = useCallback((nr: string | null | undefined) => {
+    const m = nr?.match(/(\d+)/);
+    return m ? parseInt(m[1], 10) : Number.MAX_SAFE_INTEGER;
+  }, []);
+
+  const bearbeiterMap = useMemo(
+    () => new Map(bearbeiter.map((b) => [b.id, b.name])),
+    [bearbeiter],
+  );
+
   const grouped = useMemo(() => {
     if (rolle !== "Chef") return null;
     const groups = new Map<string, MandantCard[]>();
@@ -157,15 +167,15 @@ export default function MeineMandanten() {
     return Array.from(groups.entries())
       .map(([key, items]) => ({
         key,
-        name: key === "__none__" ? "Nicht zugewiesen" : (bearbeiter.find((b) => b.id === key)?.name ?? "Unbekannt"),
-        items: items.sort((a, b) => a.name.localeCompare(b.name)),
+        name: key === "__none__" ? "Nicht zugewiesen" : (bearbeiterMap.get(key) ?? "Unbekannt"),
+        items: items.sort((a, b) => numOf(a.mandanten_nummer) - numOf(b.mandanten_nummer)),
       }))
       .sort((a, b) => {
         if (a.key === "__none__") return 1;
         if (b.key === "__none__") return -1;
         return a.name.localeCompare(b.name);
       });
-  }, [rolle, filtered, bearbeiter]);
+  }, [rolle, filtered, bearbeiterMap, numOf]);
 
   const renderCard = (m: MandantCard) => {
     const adresse = [m.strasse, [m.plz, m.ort].filter(Boolean).join(" ")].filter((v) => v && v.trim() !== "").join(", ");
