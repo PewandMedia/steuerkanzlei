@@ -169,8 +169,16 @@ export default function Dashboard() {
     setMandanten(mapped);
   };
 
-  useEffect(() => { fetchData(); }, []);
-  useEffect(() => { fetchMandanten(); }, []);
+  useEffect(() => {
+    const cached = getCached<any[]>("dashboard:buchhaltungen");
+    if (cached) setBuchhaltungen(cached as any);
+    fetchData();
+  }, []);
+  useEffect(() => {
+    const cached = getCached<any[]>("dashboard:mandanten");
+    if (cached) setMandanten(cached as any);
+    fetchMandanten();
+  }, []);
 
 
   const bearbeiterList = useMemo(() => {
