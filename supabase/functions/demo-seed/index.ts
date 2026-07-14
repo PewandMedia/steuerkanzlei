@@ -114,31 +114,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ---- 3. Create 10 Sachbearbeiter ----
-    const sbBenutzerIds: string[] = [];
-    for (let i = 0; i < SACHBEARBEITER.length; i++) {
-      const name = SACHBEARBEITER[i];
-      const email = `sb${String(i + 1).padStart(2, "0")}@pewand-demo.de`;
-      const { data: created, error } = await svc.auth.admin.createUser({
-        email, password: DEMO_PASSWORD, email_confirm: true, user_metadata: { name },
-      });
-      if (error || !created.user) return j(500, { step: "createSb", email, error: error?.message });
-      await svc.from("user_roles").delete().eq("user_id", created.user.id);
-      await svc.from("user_roles").insert({ user_id: created.user.id, role: "Sachbearbeiter" });
-      await svc.from("benutzer").upsert(
-        { user_id: created.user.id, name, email }, { onConflict: "user_id" },
-      );
-      const { data: b } = await svc.from("benutzer").select("id").eq("user_id", created.user.id).maybeSingle();
-      sbBenutzerIds.push(b!.id);
-    }
-
-    // Resolve role benutzer.id (role Sachbearbeiter default demo user for kommentare)
+    // ---- 3. Resolve role benutzer.id ----
     const { data: mainSb } = await svc.from("benutzer").select("id").eq("user_id", userIds["Sachbearbeiter"]).maybeSingle();
     const mainSbBid = mainSb!.id;
     const { data: chefB } = await svc.from("benutzer").select("id").eq("user_id", userIds["Chef"]).maybeSingle();
     const chefBid = chefB!.id;
     const { data: sekB } = await svc.from("benutzer").select("id").eq("user_id", userIds["Sekretariat"]).maybeSingle();
     const sekBid = sekB!.id;
+
 
     // All bearbeiter available for co-bearbeiter (10 sb + main demo sachbearbeiter)
     const allSbBids = [...sbBenutzerIds, mainSbBid];
