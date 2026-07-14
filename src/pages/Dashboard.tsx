@@ -174,6 +174,7 @@ export default function Dashboard() {
     const sucheLower = suche.trim().toLowerCase();
     const result = buchhaltungen.filter((b) => {
       if (statusFilter !== "all" && b.status !== statusFilter) return false;
+      if (!zeigeErledigte && statusFilter === "all" && b.status === "Buchhaltung erledigt") return false;
       if (bearbeiterFilter !== "all" && b.bearbeiter?.name !== bearbeiterFilter) return false;
       if (monatFilter && !b.monat.toLowerCase().includes(monatFilter.toLowerCase())) return false;
       if (nurMeine && benutzerId) {
