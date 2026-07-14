@@ -48,8 +48,18 @@ export default function MeineMandanten() {
 
   useEffect(() => {
     if (authLoading || !rolle) return;
+
+    // Sofort aus Cache hydratisieren, damit Wechsel zwischen Seiten instant ist.
+    const cachedMand = getCached<MandantCard[]>("meine-mandanten:cards");
+    const cachedBearb = getCached<Bearbeiter[]>("meine-mandanten:bearbeiter");
+    if (cachedMand) {
+      setMandanten(cachedMand);
+      if (cachedBearb) setBearbeiter(cachedBearb);
+      setLoading(false);
+    }
+
     const load = async () => {
-      setLoading(true);
+      if (!cachedMand) setLoading(true);
       const [mandantenData, buchhaltungenData, benutzerData] = await Promise.all([
         fetchAll<any>((from, to) =>
           supabase
