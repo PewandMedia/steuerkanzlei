@@ -98,7 +98,7 @@ export default function Dashboard() {
       data = await fetchAll<any>((from, to) =>
         supabase
           .from("buchhaltungen")
-          .select("id, monat, status, belegeingang_datum, fertiggestellt_datum, abgabe_datum, faellig_am, faellig_am_manuell, dauerfristverlaengerung, zurueckgewiesen_am, notizen, bearbeiter_id, mandant_id, gruppen_id, mandant:mandanten(id, mandanten_nummer, name, firma, telefon, email), bearbeiter:benutzer!buchhaltungen_bearbeiter_id_fkey(name), buchhaltung_dokumente(id), co:buchhaltung_co_bearbeiter(bearbeiter:benutzer!buchhaltung_co_bearbeiter_bearbeiter_id_fkey(id, name)), belegeingaenge(id, datum, notiz)")
+          .select("id, monat, status, belegeingang_datum, fertiggestellt_datum, abgabe_datum, faellig_am, faellig_am_manuell, dauerfristverlaengerung, zurueckgewiesen_am, notizen, bearbeiter_id, mandant_id, gruppen_id, mandant:mandanten(id, mandanten_nummer, name, firma, telefon, email), bearbeiter:benutzer!buchhaltungen_bearbeiter_id_fkey(name), buchhaltung_dokumente(id), co:buchhaltung_co_bearbeiter(bearbeiter:benutzer!buchhaltung_co_bearbeiter_bearbeiter_id_fkey(id, name)), belegeingaenge(id)")
           .order("erstellt_am", { ascending: false })
           .order("id", { ascending: true })
           .range(from, to) as any,
