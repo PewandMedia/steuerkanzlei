@@ -176,11 +176,10 @@ Deno.serve(async (req) => {
       for (let m = 1; m <= maxM; m++) erledigtMonths.push([y, m]);
     }
 
-    // 550 erledigt: distribute ~3-4 per mandant. Assign months by taking mandant index offset.
-    let erledigtTarget = 550;
-    // Give each mandant floor(550/150)=3 erledigt, then remainder gets +1
-    const perMandantErledigt = Array(150).fill(3);
-    for (let i = 0; i < erledigtTarget - 3 * 150; i++) perMandantErledigt[i] += 1;
+    // 80 erledigt: erste 80 Mandanten bekommen je 1 erledigte Buchhaltung
+    const perMandantErledigt = Array(150).fill(0);
+    for (let i = 0; i < 80; i++) perMandantErledigt[i] = 1;
+
 
     for (let mi = 0; mi < 150; mi++) {
       const m = mandantenInfo[mi];
@@ -233,7 +232,7 @@ Deno.serve(async (req) => {
     // 100 offen (noch Zeit): month 2026-04/05/06, various statuses
     const openStatuses = ["Eingegangen", "In Bearbeitung", "In Bearbeitung", "In Prüfung"];
     const openMonths: Array<[number, number]> = [[2026, 4], [2026, 5], [2026, 6]];
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 50; i++) {
       const m = mandantenInfo[(i * 11 + 3) % 150];
       const [y, mo] = openMonths[i % openMonths.length];
       const key = monthKey(y, mo);

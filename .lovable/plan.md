@@ -1,29 +1,40 @@
 ## Ziel
-`Meine Mandanten` immer nach Mandantennummer (M-1 → M-150) sortieren und die Mobilansicht (390 px) aufräumen und beschleunigen.
+Demo-Datenmenge in `supabase/functions/demo-seed/index.ts` deutlich reduzieren, damit die App auf Mobile/Laptop nicht mehr laggt. Statt 670 Buchhaltungen nur noch **150 insgesamt**.
 
-## Änderungen in `src/pages/MeineMandanten.tsx`
+## Neue Verteilung
+- **80 erledigt** (`Buchhaltung erledigt`)
+- **20 überzogen** (Fälligkeit in der Vergangenheit, Status `In Bearbeitung` / `Warten auf Mandant`)
+- **50 offen** (noch Zeit, Status `Eingegangen` / `In Bearbeitung` / `In Prüfung`)
+- **Summe: 150**
 
-### 1. Chronologische Sortierung überall
-- Sachbearbeiter-Ansicht: aktuell wird vor dem Rendern per `.sort((a,b) => a.name.localeCompare(b.name))` alphabetisch umsortiert → entfernen. Die Liste bleibt in der bereits geladenen Reihenfolge M-1 … M-150.
-- Chef-Ansicht (`grouped`): jede Gruppe wird ebenfalls per `a.name.localeCompare(b.name)` sortiert → auf natürliche Sortierung nach `mandanten_nummer` umstellen (gleiche `numOf`-Helper-Funktion wie im initialen Load).
-- Ergebnis: In beiden Rollen zählt die Liste sichtbar M-1, M-2, M-3, …
+150 Mandanten (M-1 … M-150) bleiben unverändert — jeder Mandant hat also im Schnitt ~1 Buchhaltung.
 
-### 2. Mobile-Layout (< 640 px)
-Karte kompakter, ohne horizontales Überlaufen:
-- Nummer-Tile schmaler auf Mobile (`h-10 w-14`, größere Größen nur ab `md`), Font-Skalierung an `nr.length` bleibt.
-- Statuspill rechts auf Mobile nur Icon + Zahl (kein „offen"-Text), damit die Zeile nicht bricht.
-- „X erledigt"-Text bleibt bereits `hidden sm:inline` — beibehalten.
-- Padding der Karte auf Mobile von `px-3 py-2.5` auf `px-2.5 py-2`, Gap `gap-2` statt `gap-3`.
-- Suchleiste: Input auf Mobile `h-11 text-sm`, Zähler-Badge bleibt `hidden sm:inline-flex`.
-- Seitenpadding von `p-6 lg:p-10` auf `p-4 sm:p-6 lg:p-10`, Card-Padding `p-3 sm:p-5`.
-- Überschrift auf Mobile `text-xl`, ab `sm` `text-2xl`.
+## Änderungen in `supabase/functions/demo-seed/index.ts`
 
-### 3. Performance auf Mobile
-- `PaginatedList`-Default-Seitengröße: auf Mobile-Viewport (`window.matchMedia("(max-width: 640px)")`) initial 25 statt 50 Einträge — reduziert First-Paint-Kosten spürbar; Nutzer kann via Footer erhöhen (bestehender `pageSize`-Selector).
-- `renderCard` in `useCallback` verpacken und pro Zeile nur die tatsächlich benötigten Felder ableiten (kein `find()` über `bearbeiter` pro Row) → `bearbeiterMap = useMemo(new Map(bearbeiter.map(b => [b.id, b.name])))` einmalig, in `renderCard` per `.get()` nutzen. Spart bei 150 Zeilen × Rerender die O(n·m)-Lookups.
-- `filtered`-Memo behält die aktuelle Deps-Liste; die überflüssige Nachsortierung in Punkt 1 entfällt und spart pro Render einen 150-Item-Sort.
+1. **Erledigt-Verteilung**
+   - `erledigtTarget = 80` (statt 550).
+   - `perMandantErledigt`: Basis `0`, dann die ersten 80 Mandanten bekommen je 1 erledigte Buchhaltung. Kein `floor(80/150)`-Trick — einfach `Array(150).fill(0)` und Indizes 0-79 auf 1 setzen.
+   - Monate weiterhin aus dem `erledigtMonths`-Pool (Jan 2024 – Aug 2025), rotierend per Mandant-Index.
+
+2. **Überzogen**
+   - Bleibt bei **20** (Loop unverändert). Verteilung `mandantenInfo[i * 7 % 150]` bleibt.
+
+3. **Offen**
+   - `for (let i = 0; i < 50; i++)` (statt 100). Rest der Logik unverändert (`openMonths`, `openStatuses`).
+
+4. **Co-Bearbeiter**
+   - `coCount = 12` bleibt — passt weiterhin (12 von 150 sind sichtbar).
+
+5. **Belegeingänge / Kommentare**
+   - Bleibt wie es ist (1-2 Belege pro Buchhaltung), skaliert automatisch mit der kleineren Menge.
+
+6. **Return-Payload**
+   - `erledigt` / `offen`-Zähler bleiben aus `insertedBh.filter(...)` — keine Änderung nötig.
+
+## Nach dem Seed
+- Edge-Function neu deployen.
+- Einmalig `demo-seed` aufrufen, damit die Datenbank sofort auf 150 Zeilen schrumpft (der 03:00-UTC-Cron macht es sonst erst morgen).
 
 ## Nicht Teil dieses Plans
-- Keine Änderung an Datenmodell, Query oder Cache (`simple-cache` bleibt).
-- Keine Redesigns der Karten außer den Mobile-Anpassungen oben.
-- Kein Eingriff in Dashboard oder andere Seiten.
+- Keine Änderungen am Frontend, Cache, Pagination oder Sortierung.
+- Keine Änderung an Mandanten-Anzahl (bleibt 150) oder am Cron-Job.
