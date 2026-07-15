@@ -232,7 +232,7 @@ Deno.serve(async (req) => {
     // 100 offen (noch Zeit): month 2026-04/05/06, various statuses
     const openStatuses = ["Eingegangen", "In Bearbeitung", "In Bearbeitung", "In Prüfung"];
     const openMonths: Array<[number, number]> = [[2026, 4], [2026, 5], [2026, 6]];
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 50; i++) {
       const m = mandantenInfo[(i * 11 + 3) % 150];
       const [y, mo] = openMonths[i % openMonths.length];
       const key = monthKey(y, mo);
