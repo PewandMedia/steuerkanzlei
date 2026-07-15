@@ -44,15 +44,15 @@ const STAEDTE: Array<[string, string]> = [
 ];
 const STRASSEN = ["Hauptstr.","Bahnhofstr.","Marktplatz","Lindenweg","Königsallee","Ludwigstr.","Reeperbahn","Gartenstr.","Kirchweg","Schulstr.","Rathausplatz","Am Park","Ringstr.","Poststr.","Mühlenweg"];
 
-async function deleteAllUsers(svc: any, filter: (email: string) => boolean) {
+async function findUserByEmail(svc: any, email: string): Promise<string | null> {
   let page = 1;
   while (true) {
     const { data } = await svc.auth.admin.listUsers({ page, perPage: 200 });
     const users = data?.users ?? [];
-    if (users.length === 0) break;
-    const toDelete = users.filter((u: any) => u.email && filter(u.email));
-    for (const u of toDelete) await svc.auth.admin.deleteUser(u.id);
-    if (users.length < 200) break;
+    if (users.length === 0) return null;
+    const hit = users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
+    if (hit) return hit.id;
+    if (users.length < 200) return null;
     page++;
   }
 }
@@ -72,14 +72,12 @@ Deno.serve(async (req) => {
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const svc = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-    // ---- 1. Cleanup old demo data ----
+    // ---- 1. Cleanup old demo data (Mandanten + abhängige Rows) ----
     const { data: oldMandanten } = await svc.from("mandanten").select("id").ilike("notizen", "[DEMO]%");
     const oldIds = (oldMandanten ?? []).map((m: any) => m.id);
     if (oldIds.length > 0) {
-      // fetch buchhaltung ids
       const { data: oldBh } = await svc.from("buchhaltungen").select("id").in("mandant_id", oldIds);
       const bhIds = (oldBh ?? []).map((b: any) => b.id);
-      // delete in chunks to avoid huge IN clauses
       const chunkIds = <T>(arr: T[], n = 200) => {
         const out: T[][] = []; for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n)); return out;
       };
@@ -95,24 +93,35 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Remove old demo auth users (@pewand-demo.de & @taxom-demo.de)
-    await deleteAllUsers(svc, (email) => email.endsWith("@pewand-demo.de") || email.endsWith("@taxom-demo.de"));
-
-    // ---- 2. Ensure role users ----
+    // ---- 2. Ensure role users (idempotent: reuse existing, don't recreate) ----
+    // Wichtig: User NICHT löschen, damit offene Browser-Sessions nach dem Reset weiterhin gültig sind.
     const userIds: Record<string, string> = {};
     for (const u of ROLE_USERS) {
-      const { data: created, error } = await svc.auth.admin.createUser({
-        email: u.email, password: DEMO_PASSWORD, email_confirm: true, user_metadata: { name: u.name },
-      });
-      if (error || !created.user) return j(500, { step: "createRoleUser", email: u.email, error: error?.message });
-      userIds[u.rolle] = created.user.id;
-      await svc.from("user_roles").delete().eq("user_id", created.user.id);
-      await svc.from("user_roles").insert({ user_id: created.user.id, role: u.rolle });
+      let uid = await findUserByEmail(svc, u.email);
+      if (uid) {
+        // Refresh password/meta but keep the same ID
+        await svc.auth.admin.updateUserById(uid, {
+          password: DEMO_PASSWORD,
+          email_confirm: true,
+          user_metadata: { name: u.name },
+        });
+      } else {
+        const { data: created, error } = await svc.auth.admin.createUser({
+          email: u.email, password: DEMO_PASSWORD, email_confirm: true, user_metadata: { name: u.name },
+        });
+        if (error || !created.user) return j(500, { step: "createRoleUser", email: u.email, error: error?.message });
+        uid = created.user.id;
+      }
+      userIds[u.rolle] = uid;
+      // Rollen & Benutzer-Profil idempotent setzen
+      await svc.from("user_roles").delete().eq("user_id", uid);
+      await svc.from("user_roles").insert({ user_id: uid, role: u.rolle });
       await svc.from("benutzer").upsert(
-        { user_id: created.user.id, name: u.name, email: u.email },
+        { user_id: uid, name: u.name, email: u.email },
         { onConflict: "user_id" },
       );
     }
+
 
     // ---- 3. Resolve role benutzer.id ----
     const { data: mainSb } = await svc.from("benutzer").select("id").eq("user_id", userIds["Sachbearbeiter"]).maybeSingle();
