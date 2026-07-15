@@ -1,40 +1,30 @@
-## Ziel
-Demo-Datenmenge in `supabase/functions/demo-seed/index.ts` deutlich reduzieren, damit die App auf Mobile/Laptop nicht mehr laggt. Statt 670 Buchhaltungen nur noch **150 insgesamt**.
+## Problem
+Der `demo-seed` löscht und erstellt bei jedem Reset die Auth-User neu → neue UUIDs. Wer davor eingeloggt war, hat eine Session mit einer User-ID, die es nicht mehr gibt. Alle Requests laufen zwar durch (Status 200), aber `benutzer`/`user_roles` liefern `[]`, und RLS blockt danach Mandanten & Buchhaltungen.
 
-## Neue Verteilung
-- **80 erledigt** (`Buchhaltung erledigt`)
-- **20 überzogen** (Fälligkeit in der Vergangenheit, Status `In Bearbeitung` / `Warten auf Mandant`)
-- **50 offen** (noch Zeit, Status `Eingegangen` / `In Bearbeitung` / `In Prüfung`)
-- **Summe: 150**
+## Lösung (zwei Teile)
 
-150 Mandanten (M-1 … M-150) bleiben unverändert — jeder Mandant hat also im Schnitt ~1 Buchhaltung.
+### 1. Stale-Session automatisch abfangen (Frontend)
+In `src/pages/Login.tsx` beim Mount:
+- `supabase.auth.getSession()` prüfen
+- Falls Session existiert, gegen `benutzer` mit `user_id` prüfen
+- Wenn kein Treffer → `supabase.auth.signOut()` und auf Login-Auswahl bleiben
 
-## Änderungen in `supabase/functions/demo-seed/index.ts`
+Zusätzlich in `src/App.tsx` (oder wo Auth-Guard sitzt): wenn eingeloggter User keinen `benutzer`-Datensatz hat, automatisch ausloggen und nach `/` redirecten. Damit sind alle Bestandsnutzer nach einem nächtlichen Reset sofort sauber.
 
-1. **Erledigt-Verteilung**
-   - `erledigtTarget = 80` (statt 550).
-   - `perMandantErledigt`: Basis `0`, dann die ersten 80 Mandanten bekommen je 1 erledigte Buchhaltung. Kein `floor(80/150)`-Trick — einfach `Array(150).fill(0)` und Indizes 0-79 auf 1 setzen.
-   - Monate weiterhin aus dem `erledigtMonths`-Pool (Jan 2024 – Aug 2025), rotierend per Mandant-Index.
+### 2. Demo-Seed stabil machen (Edge Function)
+`supabase/functions/demo-seed/index.ts` so umbauen, dass Auth-User **nicht** neu angelegt werden, wenn sie schon existieren:
+- Für die 3 fixen Demo-Mails: erst per `admin.listUsers` / `getUserByEmail` prüfen
+- Falls vorhanden → wiederverwenden (ID behalten), nur Passwort/Meta refreshen
+- Falls nicht vorhanden → einmal anlegen
+- Nur `mandanten`, `buchhaltungen`, `belegeingaenge`, `buchhaltung_co_bearbeiter`, `benachrichtigungen`, `kommentare` werden geleert und neu befüllt
+- `benutzer` + `user_roles` für die 3 Demo-User idempotent upserten
 
-2. **Überzogen**
-   - Bleibt bei **20** (Loop unverändert). Verteilung `mandantenInfo[i * 7 % 150]` bleibt.
+So bleiben die User-IDs über Resets hinweg stabil → offene Browser-Sessions funktionieren nach 03:00 UTC weiter.
 
-3. **Offen**
-   - `for (let i = 0; i < 50; i++)` (statt 100). Rest der Logik unverändert (`openMonths`, `openStatuses`).
+### 3. Sofortmaßnahme
+Damit du jetzt sofort wieder reinkommst: einmal ausloggen (oder Inkognito-Fenster) und über die Rollen-Karten neu einloggen. Ab dann greift Teil 1+2.
 
-4. **Co-Bearbeiter**
-   - `coCount = 12` bleibt — passt weiterhin (12 von 150 sind sichtbar).
-
-5. **Belegeingänge / Kommentare**
-   - Bleibt wie es ist (1-2 Belege pro Buchhaltung), skaliert automatisch mit der kleineren Menge.
-
-6. **Return-Payload**
-   - `erledigt` / `offen`-Zähler bleiben aus `insertedBh.filter(...)` — keine Änderung nötig.
-
-## Nach dem Seed
-- Edge-Function neu deployen.
-- Einmalig `demo-seed` aufrufen, damit die Datenbank sofort auf 150 Zeilen schrumpft (der 03:00-UTC-Cron macht es sonst erst morgen).
-
-## Nicht Teil dieses Plans
-- Keine Änderungen am Frontend, Cache, Pagination oder Sortierung.
-- Keine Änderung an Mandanten-Anzahl (bleibt 150) oder am Cron-Job.
+## Betroffene Dateien
+- `src/pages/Login.tsx` — Stale-Session-Check on mount
+- `src/App.tsx` bzw. Auth-Wrapper — Guard bei fehlendem `benutzer`
+- `supabase/functions/demo-seed/index.ts` — idempotenter Umgang mit Auth-Usern
