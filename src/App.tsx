@@ -1,11 +1,13 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { AppLayout } from "@/components/AppLayout";
+import { supabase } from "@/integrations/supabase/client";
 import Login from "./pages/Login";
 import Impressum from "./pages/Impressum";
 import Dashboard from "./pages/Dashboard";
@@ -21,8 +23,35 @@ const queryClient = new QueryClient();
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Laden...</div>;
-  if (!user) return <Navigate to="/login" replace />;
+  const [checking, setChecking] = useState(true);
+  const [valid, setValid] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (loading) return;
+    if (!user) { setChecking(false); setValid(false); return; }
+    setChecking(true);
+    (async () => {
+      const { data, error } = await supabase
+        .from("benutzer")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      if (error || !data) {
+        // Stale Session: User existiert nach Demo-Reset nicht mehr
+        await supabase.auth.signOut();
+        setValid(false);
+      } else {
+        setValid(true);
+      }
+      setChecking(false);
+    })();
+    return () => { cancelled = true; };
+  }, [user, loading]);
+
+  if (loading || checking) return <div className="min-h-screen flex items-center justify-center">Laden...</div>;
+  if (!user || !valid) return <Navigate to="/login" replace />;
   return <AppLayout>{children}</AppLayout>;
 }
 
