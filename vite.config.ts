@@ -11,6 +11,8 @@ export default defineConfig(({ mode }) => ({
     allowedHosts: [
       "backoffice.pewand-media.de",
       ".backoffice.pewand-media.de",
+      "steuerkanzlei.pewandmedia.de",
+      ".pewandmedia.de",
       ".lovable.app",
       ".lovable.dev",
     ],
