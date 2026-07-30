@@ -22,9 +22,9 @@ export function BrandLogo({
       <img
         src={logoAsset.url}
         alt="Pewand Media"
-        loading="lazy"
-        className={cn("h-auto w-[78%] object-contain", imgClassName)}
+        className={cn("max-h-[80%] max-w-[84%] w-auto h-auto object-contain", imgClassName)}
       />
     </div>
+
   );
 }
