@@ -20,7 +20,7 @@ export function BrandLogo({
       )}
     >
       <img
-        src={logoAsset.url}
+        src="/logo.png"
         alt="Pewand Media"
         className={cn("max-h-[80%] max-w-[84%] w-auto h-auto object-contain", imgClassName)}
       />
