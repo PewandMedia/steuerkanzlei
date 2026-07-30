@@ -1,5 +1,5 @@
-import logoAsset from "@/assets/logo.png.asset.json";
 import { cn } from "@/lib/utils";
+
 
 /**
  * Pewand-Media-Logo als abgerundete Kachel.
