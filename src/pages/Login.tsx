@@ -4,6 +4,8 @@ import { toast } from "@/hooks/use-toast";
 import { ArrowRight, Briefcase, Crown, FileCheck2, Phone, ShieldCheck, Sparkles } from "lucide-react";
 import { usePageMeta } from "@/hooks/use-page-meta";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/BrandLogo";
+
 
 const DEMO_PASSWORD = "demo-pewand-2026!";
 
