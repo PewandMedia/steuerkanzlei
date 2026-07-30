@@ -73,9 +73,8 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-sidebar-border px-3 py-4">
         {!collapsed ? (
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-brand text-white text-[11px] font-semibold tracking-widest shadow-sm">
-              PM
-            </div>
+            <BrandLogo className="h-9 w-9 border border-border" />
+
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <h2 className="text-sm font-semibold tracking-[0.28em] text-foreground leading-none">PEWAND MEDIA</h2>
