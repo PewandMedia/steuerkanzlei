@@ -19,6 +19,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/BrandLogo";
+
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -86,10 +88,9 @@ export function AppSidebar() {
           </div>
         ) : (
           <div className="flex justify-center">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-brand text-white text-[10px] font-semibold tracking-widest shadow-sm">
-              PM
-            </div>
+            <BrandLogo className="h-8 w-8 border border-border" />
           </div>
+
         )}
       </SidebarHeader>
 
