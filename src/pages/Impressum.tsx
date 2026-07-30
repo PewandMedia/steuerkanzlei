@@ -1,5 +1,7 @@
 import { usePageMeta } from "@/hooks/use-page-meta";
 import { ArrowLeft, Mail, Phone } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
+
 
 export default function Impressum() {
   usePageMeta(
@@ -24,11 +26,10 @@ export default function Impressum() {
         <div className="absolute -bottom-40 -left-20 h-96 w-96 rounded-full bg-white/5 blur-3xl" aria-hidden />
 
         <div className="relative flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md border border-white/30 bg-white/10 text-sm font-semibold tracking-widest backdrop-blur">
-            PM
-          </div>
+          <BrandLogo className="h-10 w-10" />
           <span className="text-lg font-semibold tracking-[0.3em]">PEWAND MEDIA</span>
         </div>
+
 
         <div className="relative max-w-md">
           <h1 className="text-4xl font-semibold leading-tight tracking-tight">
@@ -47,11 +48,10 @@ export default function Impressum() {
         <div className="w-full max-w-2xl space-y-8">
           <div className="lg:hidden flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-brand text-brand-foreground text-xs font-semibold tracking-widest">
-                PM
-              </div>
+              <BrandLogo className="h-9 w-9 border border-border" />
               <span className="text-base font-semibold tracking-[0.3em] text-foreground">PEWAND MEDIA</span>
             </div>
+
           </div>
 
           <div className="space-y-2">

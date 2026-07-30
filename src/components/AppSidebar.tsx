@@ -19,6 +19,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/BrandLogo";
+
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -73,9 +75,8 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-sidebar-border px-3 py-4">
         {!collapsed ? (
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-brand text-white text-[11px] font-semibold tracking-widest shadow-sm">
-              PM
-            </div>
+            <BrandLogo className="h-9 w-9 border border-border" />
+
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <h2 className="text-sm font-semibold tracking-[0.28em] text-foreground leading-none">PEWAND MEDIA</h2>
@@ -87,10 +88,9 @@ export function AppSidebar() {
           </div>
         ) : (
           <div className="flex justify-center">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-brand text-white text-[10px] font-semibold tracking-widest shadow-sm">
-              PM
-            </div>
+            <BrandLogo className="h-8 w-8 border border-border" />
           </div>
+
         )}
       </SidebarHeader>
 

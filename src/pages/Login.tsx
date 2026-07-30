@@ -4,6 +4,8 @@ import { toast } from "@/hooks/use-toast";
 import { ArrowRight, Briefcase, Crown, FileCheck2, Phone, ShieldCheck, Sparkles } from "lucide-react";
 import { usePageMeta } from "@/hooks/use-page-meta";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/BrandLogo";
+
 
 const DEMO_PASSWORD = "demo-pewand-2026!";
 
@@ -73,9 +75,8 @@ export default function Login() {
 
         <div className="relative flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md border border-white/30 bg-white/10 text-sm font-semibold tracking-widest backdrop-blur">
-              PM
-            </div>
+            <BrandLogo className="h-10 w-10" />
+
             <span className="text-lg font-semibold tracking-[0.3em]">PEWAND MEDIA</span>
           </div>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-medium tracking-wider uppercase backdrop-blur">
@@ -124,9 +125,8 @@ export default function Login() {
         <div className="w-full max-w-md space-y-8">
           <div className="lg:hidden flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-brand text-brand-foreground text-xs font-semibold tracking-widest">
-                PM
-              </div>
+              <BrandLogo className="h-9 w-9 border border-border" />
+
               <span className="text-base font-semibold tracking-[0.3em] text-foreground">PEWAND MEDIA</span>
             </div>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-0.5 text-[10px] font-medium tracking-wider uppercase text-muted-foreground">

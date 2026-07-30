@@ -1,6 +1,8 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { ZurueckweisungAlert } from "@/components/ZurueckweisungAlert";
+import { BrandLogo } from "@/components/BrandLogo";
+
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   // Sidebar ab 1280 px standardmäßig offen — passt zu typischen Desktop-Auflösungen.
@@ -16,11 +18,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <header className="sticky top-0 z-30 h-16 flex items-center gap-3 border-b border-border/60 bg-card/80 backdrop-blur px-4 lg:px-6">
             <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
             <div className="hidden md:flex items-center gap-2 pl-1">
-              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-brand text-white text-[10px] font-semibold tracking-widest shadow-sm">
-                PM
-              </div>
+              <BrandLogo className="h-7 w-7 border border-border" />
               <span className="text-sm font-semibold tracking-[0.28em] text-foreground">PEWAND MEDIA</span>
             </div>
+
           </header>
           <main className="flex-1 min-w-0 overflow-auto">
             <div className="mx-auto w-full max-w-[1600px]">

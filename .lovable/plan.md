@@ -1,19 +1,22 @@
 ## Ziel
-Die Vite-Dev-Server-Fehlermeldung "Blocked request. This host (\"steuerkanzlei.pewandmedia.de\") is not allowed." beseitigen, damit die Vorschau/Seite über diese Domain erreichbar ist.
+Das Logo von https://pewandmedia.de/assets/logo.png ersetzt überall die aktuellen "PM"-Textkacheln und wird zum Favicon.
 
-## Aktueller Zustand
-In `vite.config.ts` sind bereits erlaubt:
-- `backoffice.pewand-media.de`
-- `.backoffice.pewand-media.de`
-- `.lovable.app`
-- `.lovable.dev`
+## Umsetzung
 
-`steuerkanzlei.pewandmedia.de` fehlt in `server.allowedHosts`.
+1. **Logo laden**
+   - Datei herunterladen (PNG, ~250 KB), als `src/assets/logo.png` ablegen und über das Asset-CDN einbinden.
+   - Zusätzlich als `public/favicon.png` speichern.
 
-## Änderung
-`vite.config.ts` erweitern: `steuerkanzlei.pewandmedia.de` zur `server.allowedHosts`-Liste hinzufügen. Optional auch die Wildcard `.pewandmedia.de`, falls weitere Subdomains später genutzt werden sollen.
+2. **Favicon**
+   - `index.html`: `<link rel="icon" href="/favicon.png" type="image/png">` auf die neue Datei zeigen lassen (Cache-Buster `?v=3`), altes Favicon entfernen.
 
-## Validierung
-- Build/Typecheck durchlaufen lassen.
-- Dev-Server neu starten (HMR-Flush bzw. Kill-ReSpawn), damit Vite die neue Konfiguration lädt.
-- Seite über `https://steuerkanzlei.pewandmedia.de` aufrufen und prüfen, ob die "Blocked request"-Meldung verschwindet.
+3. **Logo im UI ersetzen** (überall wo aktuell die "PM"-Box steht)
+   - `src/components/AppSidebar.tsx` — Header (offen + eingeklappt)
+   - `src/components/AppLayout.tsx` — Top-Header
+   - `src/pages/Login.tsx` — Branding links + mobile Kopfzeile
+   - `src/pages/Impressum.tsx` — Branding links + mobile Kopfzeile
+   - Jeweils `<img>` mit `alt="Pewand Media"`, passender Größe und beibehaltenem Schriftzug "PEWAND MEDIA".
+
+## Technisches
+- Bild-Datei per `lovable-assets` ins CDN, `.asset.json`-Pointer im Repo; Favicon bleibt echte Datei unter `public/`.
+- Auf dunklem Branding-Hintergrund (Login/Impressum) wird das Logo geprüft; falls es dort schlecht sichtbar ist, bekommt es einen hellen abgerundeten Container.
