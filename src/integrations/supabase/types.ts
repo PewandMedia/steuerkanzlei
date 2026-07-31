@@ -428,6 +428,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      ist_freigegeben: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       benutzer_rolle: "Sekretariat" | "Sachbearbeiter" | "Chef"
