@@ -15,11 +15,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <AppSidebar />
         <ZurueckweisungAlert />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="sticky top-0 z-30 h-16 flex items-center gap-3 border-b border-border/60 bg-card/80 backdrop-blur px-4 lg:px-6">
-            <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
-            <div className="hidden md:flex items-center gap-2 pl-1">
-              <BrandLogo className="h-7 w-7 border border-border" />
-              <span className="text-sm font-semibold tracking-[0.28em] text-foreground">PEWAND MEDIA</span>
+          <header className="sticky top-0 z-30 h-16 flex items-center gap-3 border-b border-border/60 bg-card/80 backdrop-blur px-3 sm:px-4 lg:px-6">
+            <SidebarTrigger className="h-10 w-10 shrink-0 text-muted-foreground hover:text-foreground" />
+            <div className="flex items-center gap-2 pl-1 min-w-0">
+              <BrandLogo className="h-7 w-7 shrink-0 border border-border" />
+              <span className="hidden sm:inline text-sm font-semibold tracking-[0.28em] text-foreground truncate">PEWAND MEDIA</span>
             </div>
 
           </header>
