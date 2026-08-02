@@ -304,11 +304,11 @@ export default function Mandanten() {
           <Table className="table-modern">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[110px]">Nr.</TableHead>
+                <TableHead className="w-[70px] sm:w-[110px]">Nr.</TableHead>
                 <TableHead>Name</TableHead>
-                <TableHead>Firma</TableHead>
-                <TableHead>Unternehmensform</TableHead>
-                <TableHead>Kontakt</TableHead>
+                <TableHead className="hidden lg:table-cell">Firma</TableHead>
+                <TableHead className="hidden md:table-cell">Unternehmensform</TableHead>
+                <TableHead className="hidden sm:table-cell">Kontakt</TableHead>
                 <TableHead className="w-[120px]">Aktionen</TableHead>
               </TableRow>
             </TableHeader>
@@ -333,9 +333,9 @@ export default function Mandanten() {
                         {m.name}
                       </button>
                     </TableCell>
-                    <TableCell>{m.firma ?? "–"}</TableCell>
-                    <TableCell>{m.unternehmensform ?? "–"}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    <TableCell className="hidden lg:table-cell">{m.firma ?? "–"}</TableCell>
+                    <TableCell className="hidden md:table-cell">{m.unternehmensform ?? "–"}</TableCell>
+                    <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
                       {m.email ?? m.telefon ?? "–"}
                     </TableCell>
                     <TableCell>

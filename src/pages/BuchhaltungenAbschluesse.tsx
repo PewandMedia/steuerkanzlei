@@ -135,14 +135,14 @@ export default function BuchhaltungenAbschluesse() {
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto -mx-2 px-2">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Mandant</TableHead>
                       <TableHead>Monat</TableHead>
-                      <TableHead>Bearbeiter</TableHead>
-                      <TableHead>Fertiggestellt</TableHead>
+                      <TableHead className="hidden md:table-cell">Bearbeiter</TableHead>
+                      <TableHead className="hidden sm:table-cell">Fertiggestellt</TableHead>
                       <TableHead>Belege</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -152,19 +152,19 @@ export default function BuchhaltungenAbschluesse() {
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
                             {r.mandanten_nummer && (
-                              <span className="font-mono text-[10px] px-1 py-0.5 rounded bg-muted text-muted-foreground">
+                              <span className="font-mono text-[10px] px-1 py-0.5 rounded bg-muted text-muted-foreground shrink-0">
                                 {r.mandanten_nummer}
                               </span>
                             )}
-                            <span>{r.mandant_name ?? "–"}</span>
-                            {r.mandant_firma && (
-                              <span className="text-xs text-muted-foreground">({r.mandant_firma})</span>
+                            <span className="min-w-0">{r.mandant_name ?? "–"}</span>
+                            {r.mandant_firma && r.mandant_firma !== r.mandant_name && (
+                              <span className="hidden lg:inline text-xs text-muted-foreground">({r.mandant_firma})</span>
                             )}
                           </div>
                         </TableCell>
-                        <TableCell>{r.monat}</TableCell>
-                        <TableCell>{r.bearbeiter_name ?? "–"}</TableCell>
-                        <TableCell>
+                        <TableCell className="whitespace-nowrap">{r.monat}</TableCell>
+                        <TableCell className="hidden md:table-cell">{r.bearbeiter_name ?? "–"}</TableCell>
+                        <TableCell className="hidden sm:table-cell whitespace-nowrap">
                           {r.fertiggestellt_datum
                             ? new Date(r.fertiggestellt_datum).toLocaleDateString("de-DE")
                             : "–"}

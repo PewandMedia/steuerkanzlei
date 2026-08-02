@@ -23,12 +23,19 @@ import { BrandLogo } from "@/components/BrandLogo";
 
 
 export function AppSidebar() {
-  const { state } = useSidebar();
-  const collapsed = state === "collapsed";
+  const { state, isMobile, setOpenMobile } = useSidebar();
+  const collapsed = state === "collapsed" && !isMobile;
   const location = useLocation();
   const { rolle, benutzerName, signOut, user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === "dark";
+  const closeMobile = () => {
+    if (isMobile) setOpenMobile(false);
+  };
+  const handleSignOut = () => {
+    closeMobile();
+    signOut();
+  };
 
   const workflowItems = [
     { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, visible: true },
@@ -56,9 +63,9 @@ export function AppSidebar() {
                 <SidebarMenuButton
                   asChild
                   isActive={location.pathname === item.url}
-                  className="relative h-9 rounded-md text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-semibold data-[active=true]:before:absolute data-[active=true]:before:left-0 data-[active=true]:before:top-1.5 data-[active=true]:before:bottom-1.5 data-[active=true]:before:w-[3px] data-[active=true]:before:rounded-r-full data-[active=true]:before:bg-brand"
+                  className="relative h-11 md:h-9 rounded-md text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-semibold data-[active=true]:before:absolute data-[active=true]:before:left-0 data-[active=true]:before:top-1.5 data-[active=true]:before:bottom-1.5 data-[active=true]:before:w-[3px] data-[active=true]:before:rounded-r-full data-[active=true]:before:bg-brand"
                 >
-                  <NavLink to={item.url} end>
+                  <NavLink to={item.url} end onClick={closeMobile}>
                     <item.icon className="mr-2 h-4 w-4 shrink-0" />
                     {!collapsed && <span className="flex-1 truncate">{item.title}</span>}
                   </NavLink>
@@ -117,7 +124,7 @@ export function AppSidebar() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={signOut}
+              onClick={handleSignOut}
               title="Abmelden"
               className="text-muted-foreground hover:text-foreground"
             >
@@ -161,8 +168,8 @@ export function AppSidebar() {
             <NotificationBell variant="full" />
             <Button
               variant="outline"
-              onClick={signOut}
-              className="w-full justify-start gap-2 h-9 text-muted-foreground hover:text-foreground"
+              onClick={handleSignOut}
+              className="w-full justify-start gap-2 h-11 md:h-9 text-muted-foreground hover:text-foreground"
             >
               <LogOut className="h-4 w-4" />
               Abmelden
