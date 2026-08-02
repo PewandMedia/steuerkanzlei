@@ -124,7 +124,7 @@ export function AppSidebar() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={signOut}
+              onClick={handleSignOut}
               title="Abmelden"
               className="text-muted-foreground hover:text-foreground"
             >
@@ -168,8 +168,8 @@ export function AppSidebar() {
             <NotificationBell variant="full" />
             <Button
               variant="outline"
-              onClick={signOut}
-              className="w-full justify-start gap-2 h-9 text-muted-foreground hover:text-foreground"
+              onClick={handleSignOut}
+              className="w-full justify-start gap-2 h-11 md:h-9 text-muted-foreground hover:text-foreground"
             >
               <LogOut className="h-4 w-4" />
               Abmelden
