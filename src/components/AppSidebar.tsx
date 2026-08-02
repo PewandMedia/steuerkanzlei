@@ -23,12 +23,19 @@ import { BrandLogo } from "@/components/BrandLogo";
 
 
 export function AppSidebar() {
-  const { state } = useSidebar();
-  const collapsed = state === "collapsed";
+  const { state, isMobile, setOpenMobile } = useSidebar();
+  const collapsed = state === "collapsed" && !isMobile;
   const location = useLocation();
   const { rolle, benutzerName, signOut, user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === "dark";
+  const closeMobile = () => {
+    if (isMobile) setOpenMobile(false);
+  };
+  const handleSignOut = () => {
+    closeMobile();
+    signOut();
+  };
 
   const workflowItems = [
     { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, visible: true },
