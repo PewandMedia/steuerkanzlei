@@ -228,13 +228,13 @@ export default function BenutzerVerwaltung() {
   }
 
   return (
-    <div className="p-6 lg:p-10 space-y-6 min-w-0">
-      <div className="flex items-center justify-between">
-        <div>
+    <div className="p-4 sm:p-6 lg:p-10 space-y-6 min-w-0">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-2xl md:text-3xl font-bold">Benutzerverwaltung</h1>
           <p className="text-sm text-muted-foreground">Benutzer anlegen, Rollen vergeben und entfernen.</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
+        <Button onClick={() => setCreateOpen(true)} className="w-full sm:w-auto shrink-0">
           <UserPlus className="mr-2 h-4 w-4" /> Neuer Benutzer
         </Button>
       </div>
