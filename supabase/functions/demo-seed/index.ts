@@ -168,6 +168,7 @@ Deno.serve(async (req) => {
         umsatzsteuer_id: rand() > 0.5 ? `DE${randInt(100000000, 999999999)}` : null,
         dauerfristverlaengerung: rand() > 0.5,
         notizen: "[DEMO] Beispiel-Mandant für die Live-Demo.",
+        arbeitsbereich: "demo",
         zugewiesener_bearbeiter_id: sbId,
       });
     }
