@@ -392,7 +392,13 @@ export default function Dashboard() {
           <h1 className="text-2xl font-semibold tracking-tight text-foreground mt-1">Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-1">Alle offenen Buchhaltungen, Fristen und Prioritäten auf einen Blick.</p>
         </div>
-        <NeueBuchhaltungDialog mandanten={mandanten} onCreated={fetchData} />
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing} className="h-9">
+            <RefreshCw className={`h-4 w-4 mr-1.5 ${refreshing ? "animate-spin" : ""}`} />
+            Aktualisieren
+          </Button>
+          <NeueBuchhaltungDialog mandanten={mandanten} onCreated={fetchData} />
+        </div>
       </div>
 
 
