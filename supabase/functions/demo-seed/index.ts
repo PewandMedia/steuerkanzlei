@@ -360,6 +360,36 @@ Deno.serve(async (req) => {
     }
     if (rueckKommentare.length > 0) await chunkedInsert(svc, "kommentare", rueckKommentare, 100);
 
+    // ---- 7c. Benachrichtigungen (Glocke) für Chef & Sachbearbeiter ----
+    const notifRows: any[] = [];
+    for (const bh of insertedBh) {
+      if (bh.status === "In Prüfung") {
+        notifRows.push({
+          empfaenger_id: chefBid,
+          typ: "in_pruefung",
+          titel: "Buchhaltung bereit zur Prüfung",
+          nachricht: "Buchhaltung für Monat " + bh.monat + " ist bereit zur Prüfung.",
+          buchhaltung_id: bh.id,
+          gelesen: false,
+        });
+      }
+    }
+    for (let i = 0; i < rueckKandidaten.length; i++) {
+      const bh = rueckKandidaten[i];
+      const grund = rueckGruende[i % rueckGruende.length];
+      notifRows.push({
+        empfaenger_id: bh.sbId,
+        typ: "zurueckgewiesen",
+        titel: "Buchhaltung zurückgewiesen",
+        nachricht: "Monat " + bh.monat + " wurde vom Chef zurückgewiesen.\nGrund: " + grund,
+        buchhaltung_id: bh.id,
+        gelesen: false,
+      });
+    }
+    if (notifRows.length > 0) await chunkedInsert(svc, "benachrichtigungen", notifRows, 200);
+
+
+
     // ---- 8. Co-Bearbeiter für 12 Buchhaltungen (Chef als Zweitbearbeiter) ----
     const coRows: any[] = [];
     const coCount = 12;
