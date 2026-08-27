@@ -37,7 +37,8 @@ import { usePaginatedList } from "@/hooks/use-paginated-list";
 import { PaginationFooter } from "@/components/PaginationFooter";
 import { usePageSize } from "@/hooks/use-page-size";
 import { fetchAll } from "@/lib/fetch-all";
-import { getCached, setCached } from "@/lib/simple-cache";
+import { getCached, setCached, invalidateCache } from "@/lib/simple-cache";
+import { RefreshCw } from "lucide-react";
 import { useFocusRow } from "@/hooks/use-focus-row";
 
 type BuchhaltungStatus = Database["public"]["Enums"]["buchhaltung_status"];
