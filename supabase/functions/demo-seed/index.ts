@@ -1,5 +1,6 @@
-// Demo seed: creates demo users (role users + 10 Sachbearbeiter) and
-// realistic sample data: 150 Mandanten, 550 erledigte + 20 überzogene + 100 offene Buchhaltungen.
+// Demo seed: creates demo users (Sekretariat / Sachbearbeiter / Chef) and
+// realistic sample data: 150 Mandanten, 80 erledigte + 20 überzogene + 50 offene Buchhaltungen.
+// Alle Datumsangaben werden relativ zum Seed-Zeitpunkt berechnet (rollierendes Fenster).
 // Idempotent - safe to call multiple times. Public function (demo purpose).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
 
