@@ -259,7 +259,8 @@ Deno.serve(async (req) => {
     // 50 offen (noch Zeit): Monate werden fristbasiert gewählt — nur Monate,
     // deren vom Trigger berechnete Frist noch mindestens 3 Tage in der Zukunft liegt.
     // Frist = 10. des Folgemonats, mit Dauerfristverlängerung 10. des übernächsten.
-    const openStatuses = ["Eingegangen", "In Bearbeitung", "In Bearbeitung", "In Prüfung"];
+    // Verteilung: 10x Eingegangen, 20x In Bearbeitung, 20x In Prüfung (beim Chef zur Freigabe)
+    const openStatuses = ["Eingegangen", "In Bearbeitung", "In Prüfung", "In Bearbeitung", "In Prüfung"];
     const MIN_PUFFER_TAGE = 3;
     const fristFuer = (y: number, mo: number, dfv: boolean) =>
       new Date(Date.UTC(y, mo - 1 + (dfv ? 2 : 1), 10));
