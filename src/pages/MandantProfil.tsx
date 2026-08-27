@@ -26,6 +26,7 @@ import { usePaginatedList } from "@/hooks/use-paginated-list";
 import { fetchAll as fetchAllRows } from "@/lib/fetch-all";
 import { PaginationFooter } from "@/components/PaginationFooter";
 import { usePageSize } from "@/hooks/use-page-size";
+import { compareMonatDesc } from "@/lib/monat";
 
 type BuchhaltungStatus = Database["public"]["Enums"]["buchhaltung_status"];
 
@@ -123,7 +124,7 @@ export default function MandantProfil() {
 
     setMandant((mandantRes.data as unknown as Mandant) ?? null);
     setBuchhaltungen(
-      buchData.map((d: any) => ({
+      [...buchData].sort((a: any, b: any) => compareMonatDesc(a.monat, b.monat)).map((d: any) => ({
         id: d.id,
         monat: d.monat,
         status: d.status,

@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { toast } from "@/hooks/use-toast";
 import { getDeadlineStatus } from "@/lib/deadline-utils";
+import { compareMonat } from "@/lib/monat";
 import { getPrioritaet, istUeberfaellig, istBaldFaellig, inDieserWoche, inDiesemMonat, compareFaellig } from "@/lib/dashboard-prioritaet";
 import { usePageMeta } from "@/hooks/use-page-meta";
 import { usePaginatedList } from "@/hooks/use-paginated-list";
@@ -298,7 +299,7 @@ export default function Dashboard() {
       map.set(b.gruppen_id, arr);
     }
     for (const [k, v] of map) {
-      v.sort();
+      v.sort(compareMonat);
       map.set(k, v);
     }
     return map;

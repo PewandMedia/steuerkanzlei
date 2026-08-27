@@ -245,16 +245,13 @@ Deno.serve(async (req) => {
       const key = monthKey(y, mo);
       if (usedMonths[m.id].has(key)) continue;
       usedMonths[m.id].add(key);
-      const overdueDate = new Date();
-      overdueDate.setDate(overdueDate.getDate() - randInt(10, 60));
       buchhaltungRows.push({
         mandant_id: m.id,
         bearbeiter_id: m.sbId,
         monat: key,
         status: overdueStatuses[i % 2],
         dauerfristverlaengerung: m.dfv,
-        faellig_am: iso(overdueDate),
-        faellig_am_manuell: true,
+        faellig_am_manuell: false,
         notizen: i % 2 === 1 ? "Belege für diesen Monat noch nicht vollständig — Mandant wurde angeschrieben." : null,
       });
     }
