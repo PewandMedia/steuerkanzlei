@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { toast } from "@/hooks/use-toast";
 import { getDeadlineStatus } from "@/lib/deadline-utils";
+import { compareMonat } from "@/lib/monat";
 import { getPrioritaet, istUeberfaellig, istBaldFaellig, inDieserWoche, inDiesemMonat, compareFaellig } from "@/lib/dashboard-prioritaet";
 import { usePageMeta } from "@/hooks/use-page-meta";
 import { usePaginatedList } from "@/hooks/use-paginated-list";
@@ -206,22 +207,9 @@ export default function Dashboard() {
       return true;
     });
 
+    const abgabeWert = (x: typeof result[number]) => x.abgabe_datum ?? x.fertiggestellt_datum ?? "";
+
     return result.sort((a, b) => {
-      // „In Prüfung"-Einträge immer nach Abgabezeitpunkt sortieren (älteste = zuerst abgegeben oben),
-      // unabhängig von der gewählten Sortierung. Fairness für den Sachbearbeiter, der zuerst geliefert hat.
-      if (a.status === "In Prüfung" && b.status === "In Prüfung") {
-        const av = a.abgabe_datum ?? a.fertiggestellt_datum ?? "";
-        const bv = b.abgabe_datum ?? b.fertiggestellt_datum ?? "";
-        if (av && bv && av !== bv) return av.localeCompare(bv);
-        if (av && !bv) return -1;
-        if (!av && bv) return 1;
-      }
-      // Offene Einträge: wer früher Belege eingereicht hat, ist zuerst dran (fair).
-      const istOffenA = a.status === "Eingegangen" || a.status === "In Bearbeitung" || a.status === "Warten auf Mandant";
-      const istOffenB = b.status === "Eingegangen" || b.status === "In Bearbeitung" || b.status === "Warten auf Mandant";
-      if (istOffenA && istOffenB && a.belegeingang_datum && b.belegeingang_datum && a.belegeingang_datum !== b.belegeingang_datum) {
-        return a.belegeingang_datum.localeCompare(b.belegeingang_datum);
-      }
       switch (sortierung) {
         case "frist":
           return compareFaellig(a.faellig_am, b.faellig_am);
@@ -234,10 +222,27 @@ export default function Dashboard() {
           const pa = getPrioritaet(a);
           const pb = getPrioritaet(b);
           if (pa !== pb) return pa - pb;
-          return compareFaellig(a.faellig_am, b.faellig_am);
+          // „In Prüfung": wer zuerst abgegeben hat, wird zuerst geprüft.
+          if (a.status === "In Prüfung" && b.status === "In Prüfung") {
+            const av = abgabeWert(a);
+            const bv = abgabeWert(b);
+            if (av && bv && av !== bv) return av.localeCompare(bv);
+            if (av && !bv) return -1;
+            if (!av && bv) return 1;
+          }
+          const f = compareFaellig(a.faellig_am, b.faellig_am);
+          if (f !== 0) return f;
+          // Gleichstand: wer früher Belege eingereicht hat, ist zuerst dran (fair).
+          const ba = a.belegeingang_datum ?? "";
+          const bb = b.belegeingang_datum ?? "";
+          if (ba && bb && ba !== bb) return ba.localeCompare(bb);
+          if (ba && !bb) return -1;
+          if (!ba && bb) return 1;
+          return 0;
         }
       }
     });
+
   }, [buchhaltungen, statusFilter, bearbeiterFilter, monatFilter, fristFilter, suche, sortierung, nurMeine, benutzerId, zeigeErledigte]);
 
   // Pagination — initial 10, weitere per Button / Auto-Load on Scroll
@@ -294,7 +299,7 @@ export default function Dashboard() {
       map.set(b.gruppen_id, arr);
     }
     for (const [k, v] of map) {
-      v.sort();
+      v.sort(compareMonat);
       map.set(k, v);
     }
     return map;
