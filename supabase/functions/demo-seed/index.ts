@@ -389,6 +389,8 @@ Deno.serve(async (req) => {
       buchhaltungen: insertedBh.length,
       erledigt: insertedBh.filter((b) => b.status === "Buchhaltung erledigt").length,
       offen: insertedBh.filter((b) => b.status !== "Buchhaltung erledigt").length,
+      in_pruefung: insertedBh.filter((b) => b.status === "In Prüfung").length,
+      zurueckgewiesen: rueckKandidaten.length,
       co_bearbeiter: dedupCo.length,
     });
 
