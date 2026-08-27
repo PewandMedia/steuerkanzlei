@@ -77,9 +77,13 @@ Deno.serve(async (req) => {
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const svc = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-    // ---- 1. Cleanup old demo data (Mandanten + abhängige Rows) ----
+    // ---- 1. Cleanup (Demo-Mandanten + kompletter Arbeitsbereich 'leer') ----
     const { data: oldMandanten } = await svc.from("mandanten").select("id").ilike("notizen", "[DEMO]%");
-    const oldIds = (oldMandanten ?? []).map((m: any) => m.id);
+    const { data: leerMandanten } = await svc.from("mandanten").select("id").eq("arbeitsbereich", "leer");
+    const oldIds = Array.from(new Set([
+      ...(oldMandanten ?? []).map((m: any) => m.id),
+      ...(leerMandanten ?? []).map((m: any) => m.id),
+    ]));
     if (oldIds.length > 0) {
       const { data: oldBh } = await svc.from("buchhaltungen").select("id").in("mandant_id", oldIds);
       const bhIds = (oldBh ?? []).map((b: any) => b.id);
@@ -90,6 +94,7 @@ Deno.serve(async (req) => {
         await svc.from("belegeingaenge").delete().in("buchhaltung_id", c);
         await svc.from("buchhaltung_co_bearbeiter").delete().in("buchhaltung_id", c);
         await svc.from("kommentare").delete().in("buchhaltung_id", c);
+        await svc.from("buchhaltung_dokumente").delete().in("buchhaltung_id", c);
         await svc.from("benachrichtigungen").delete().in("buchhaltung_id", c);
         await svc.from("buchhaltungen").delete().in("id", c);
       }
@@ -117,24 +122,25 @@ Deno.serve(async (req) => {
         if (error || !created.user) return j(500, { step: "createRoleUser", email: u.email, error: error?.message });
         uid = created.user.id;
       }
-      userIds[u.rolle] = uid;
+      userIds[`${u.arbeitsbereich}:${u.rolle}`] = uid;
       // Rollen & Benutzer-Profil idempotent setzen
       await svc.from("user_roles").delete().eq("user_id", uid);
       await svc.from("user_roles").insert({ user_id: uid, role: u.rolle });
       await svc.from("benutzer").upsert(
-        { user_id: uid, name: u.name, email: u.email },
+        { user_id: uid, name: u.name, email: u.email, arbeitsbereich: u.arbeitsbereich },
         { onConflict: "user_id" },
       );
     }
 
 
-    // ---- 3. Resolve role benutzer.id ----
-    const { data: mainSb } = await svc.from("benutzer").select("id").eq("user_id", userIds["Sachbearbeiter"]).maybeSingle();
+    // ---- 3. Resolve role benutzer.id (Arbeitsbereich 'demo') ----
+    const { data: mainSb } = await svc.from("benutzer").select("id").eq("user_id", userIds["demo:Sachbearbeiter"]).maybeSingle();
     const mainSbBid = mainSb!.id;
-    const { data: chefB } = await svc.from("benutzer").select("id").eq("user_id", userIds["Chef"]).maybeSingle();
+    const { data: chefB } = await svc.from("benutzer").select("id").eq("user_id", userIds["demo:Chef"]).maybeSingle();
     const chefBid = chefB!.id;
-    const { data: sekB } = await svc.from("benutzer").select("id").eq("user_id", userIds["Sekretariat"]).maybeSingle();
+    const { data: sekB } = await svc.from("benutzer").select("id").eq("user_id", userIds["demo:Sekretariat"]).maybeSingle();
     const sekBid = sekB!.id;
+
 
 
     // ---- 4. Generate 150 Mandanten (alle Simon zugewiesen) ----
