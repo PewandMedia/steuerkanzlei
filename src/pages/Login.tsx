@@ -13,6 +13,7 @@ const ROLES = [
   {
     key: "Sekretariat",
     email: "demo-sekretariat@pewand-demo.de",
+    emailLeer: "leer-sekretariat@pewand-demo.de",
     title: "Sekretariat",
     subtitle: "Sabine — Empfang & Mandanten-Kontakt",
     description: "Mandanten kontaktieren, fehlende Belege anfordern, Fristen im Blick behalten.",
@@ -21,6 +22,7 @@ const ROLES = [
   {
     key: "Sachbearbeiter",
     email: "demo-sachbearbeiter@pewand-demo.de",
+    emailLeer: "leer-sachbearbeiter@pewand-demo.de",
     title: "Sachbearbeiter",
     subtitle: "Simon — Buchhaltung & Vorbereitung",
     description: "Belege erfassen, Buchhaltungen vorbereiten, zur Prüfung freigeben.",
@@ -29,12 +31,15 @@ const ROLES = [
   {
     key: "Chef",
     email: "demo-chef@pewand-demo.de",
+    emailLeer: "leer-chef@pewand-demo.de",
     title: "Chef / Steuerberater",
     subtitle: "Christina — Prüfung & Freigabe",
     description: "Buchhaltungen prüfen, freigeben oder zurückweisen, gesamte Kanzlei überblicken.",
     Icon: Crown,
   },
 ] as const;
+
+type Modus = "demo" | "leer";
 
 export default function Login() {
   usePageMeta(
@@ -43,6 +48,7 @@ export default function Login() {
   );
 
   const [loadingRole, setLoadingRole] = useState<string | null>(null);
+  const [modus, setModus] = useState<Modus>("demo");
 
   const loginAs = async (email: string, roleKey: string) => {
     setLoadingRole(roleKey);
@@ -56,6 +62,7 @@ export default function Login() {
       setLoadingRole(null);
     }
   };
+
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
