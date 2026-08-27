@@ -1,5 +1,6 @@
-// Demo seed: creates demo users (role users + 10 Sachbearbeiter) and
-// realistic sample data: 150 Mandanten, 550 erledigte + 20 überzogene + 100 offene Buchhaltungen.
+// Demo seed: creates demo users (Sekretariat / Sachbearbeiter / Chef) and
+// realistic sample data: 150 Mandanten, 80 erledigte + 20 überzogene + 50 offene Buchhaltungen.
+// Alle Datumsangaben werden relativ zum Seed-Zeitpunkt berechnet (rollierendes Fenster).
 // Idempotent - safe to call multiple times. Public function (demo purpose).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
 
@@ -172,18 +173,26 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ---- 5. Build Buchhaltungen ----
+    // ---- 5. Build Buchhaltungen (alle Datumsangaben relativ zum Seed-Lauf) ----
     const buchhaltungRows: any[] = [];
     // Track per mandant which months already used
     const usedMonths: Record<string, Set<string>> = {};
     const monthKey = (y: number, m: number) => `${String(m).padStart(2, "0")}-${y}`;
 
-    // Pool of erledigt months: Jan 2024 through Aug 2025 (20 months)
-    const erledigtMonths: Array<[number, number]> = [];
-    for (let y = 2024; y <= 2025; y++) {
-      const maxM = y === 2025 ? 8 : 12;
-      for (let m = 1; m <= maxM; m++) erledigtMonths.push([y, m]);
+    const NOW = new Date();
+    const BASE_Y = NOW.getUTCFullYear();
+    const BASE_M = NOW.getUTCMonth() + 1; // 1-12, M0 = Monat des Seed-Laufs
+    // [Jahr, Monat] für "n Monate vor M0"
+    function monthsAgo(n: number): [number, number] {
+      const total = BASE_Y * 12 + (BASE_M - 1) - n;
+      return [Math.floor(total / 12), (total % 12) + 1];
     }
+    const iso = (d: Date) => d.toISOString().split("T")[0];
+    const clampPast = (d: Date) => (d.getTime() > NOW.getTime() ? NOW : d);
+
+    // Pool erledigter Monate: rollierendes Fenster M-4 bis M-21 (18 Monate)
+    const erledigtMonths: Array<[number, number]> = [];
+    for (let n = 4; n <= 21; n++) erledigtMonths.push(monthsAgo(n));
 
     // 80 erledigt: erste 80 Mandanten bekommen je 1 erledigte Buchhaltung
     const perMandantErledigt = Array(150).fill(0);
@@ -201,46 +210,46 @@ Deno.serve(async (req) => {
         const key = monthKey(y, mo);
         if (usedMonths[m.id].has(key)) continue;
         usedMonths[m.id].add(key);
-        const fertig = new Date(y, mo, 20 + randInt(0, 7)); // month+1, day 20-27
+        // Folgemonat des Buchhaltungsmonats, Tag 20-27, nie in der Zukunft
+        const fertig = clampPast(new Date(Date.UTC(y, mo, 20 + randInt(0, 7))));
         buchhaltungRows.push({
           mandant_id: m.id,
           bearbeiter_id: m.sbId,
           monat: key,
           status: "Buchhaltung erledigt",
-          fertiggestellt_datum: fertig.toISOString().split("T")[0],
+          fertiggestellt_datum: iso(fertig),
           dauerfristverlaengerung: m.dfv,
           faellig_am_manuell: false,
         });
       }
     }
 
-    // 20 überzogen: pick 20 mandants, month 2025-09/10/11, faellig_am in past, status
+    // 20 überzogen: Monate M-3 bis M-5, faellig_am 10-60 Tage in der Vergangenheit
     const overdueStatuses = ["In Bearbeitung", "Warten auf Mandant"];
-    const overdueMonths: Array<[number, number]> = [[2025, 9], [2025, 10], [2025, 11], [2025, 12]];
+    const overdueMonths: Array<[number, number]> = [monthsAgo(3), monthsAgo(4), monthsAgo(5)];
     for (let i = 0; i < 20; i++) {
       const m = mandantenInfo[i * 7 % 150];
       const [y, mo] = overdueMonths[i % overdueMonths.length];
       const key = monthKey(y, mo);
       if (usedMonths[m.id].has(key)) continue;
       usedMonths[m.id].add(key);
-      // faellig ~40-120 days in past
       const overdueDate = new Date();
-      overdueDate.setDate(overdueDate.getDate() - randInt(40, 120));
+      overdueDate.setDate(overdueDate.getDate() - randInt(10, 60));
       buchhaltungRows.push({
         mandant_id: m.id,
         bearbeiter_id: m.sbId,
         monat: key,
         status: overdueStatuses[i % 2],
         dauerfristverlaengerung: m.dfv,
-        faellig_am: overdueDate.toISOString().split("T")[0],
+        faellig_am: iso(overdueDate),
         faellig_am_manuell: true,
         notizen: i % 2 === 1 ? "Belege für diesen Monat noch nicht vollständig — Mandant wurde angeschrieben." : null,
       });
     }
 
-    // 100 offen (noch Zeit): month 2026-04/05/06, various statuses
+    // 50 offen (noch Zeit): Monate M0, M-1, M-2 — Frist berechnet die App selbst
     const openStatuses = ["Eingegangen", "In Bearbeitung", "In Bearbeitung", "In Prüfung"];
-    const openMonths: Array<[number, number]> = [[2026, 4], [2026, 5], [2026, 6]];
+    const openMonths: Array<[number, number]> = [monthsAgo(0), monthsAgo(1), monthsAgo(2)];
     for (let i = 0; i < 50; i++) {
       const m = mandantenInfo[(i * 11 + 3) % 150];
       const [y, mo] = openMonths[i % openMonths.length];
@@ -258,30 +267,33 @@ Deno.serve(async (req) => {
     }
 
     // Insert buchhaltungen in chunks and collect ids + info for follow-ups
-    const insertedBh: Array<{ id: string; sbId: string; status: string }> = [];
+    const insertedBh: Array<{ id: string; sbId: string; status: string; monat: string }> = [];
     for (let i = 0; i < buchhaltungRows.length; i += 300) {
       const slice = buchhaltungRows.slice(i, i + 300);
-      const { data, error } = await svc.from("buchhaltungen").insert(slice).select("id, bearbeiter_id, status");
+      const { data, error } = await svc.from("buchhaltungen").insert(slice).select("id, bearbeiter_id, status, monat");
       if (error) return j(500, { step: "insertBH", offset: i, error: error.message });
-      for (const row of data!) insertedBh.push({ id: row.id, sbId: row.bearbeiter_id, status: row.status });
+      for (const row of data!) insertedBh.push({ id: row.id, sbId: row.bearbeiter_id, status: row.status, monat: row.monat });
     }
 
-    // ---- 6. Belegeingänge (1-2 per buchhaltung) ----
+    // ---- 6. Belegeingänge (1-2 per buchhaltung, Datum passend zum Monat) ----
     const belegRows: any[] = [];
     for (const bh of insertedBh) {
+      const [mmStr, yyStr] = bh.monat.split("-");
+      const mm = Number(mmStr), yy = Number(yyStr);
       const anzahl = randInt(1, 2);
       for (let k = 0; k < anzahl; k++) {
-        const d = new Date();
-        d.setDate(d.getDate() - randInt(10, 200));
+        // ab Mitte des Buchhaltungsmonats bis in den Folgemonat hinein
+        const d = clampPast(new Date(Date.UTC(yy, mm - 1, 15 + randInt(0, 30))));
         belegRows.push({
           buchhaltung_id: bh.id,
-          datum: d.toISOString().split("T")[0],
+          datum: iso(d),
           notiz: pick(["Kontoauszüge per E-Mail", "Kassenbelege abgegeben", "Rechnungen digital eingereicht", "Belege in Kanzlei abgegeben"]),
           erstellt_von: bh.sbId,
         });
       }
     }
     await chunkedInsert(svc, "belegeingaenge", belegRows, 500);
+
 
     // ---- 7. Kommentare für "In Prüfung" ----
     const kommentarRows: any[] = [];
