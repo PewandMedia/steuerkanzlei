@@ -37,7 +37,8 @@ import { usePaginatedList } from "@/hooks/use-paginated-list";
 import { PaginationFooter } from "@/components/PaginationFooter";
 import { usePageSize } from "@/hooks/use-page-size";
 import { fetchAll } from "@/lib/fetch-all";
-import { getCached, setCached } from "@/lib/simple-cache";
+import { getCached, setCached, invalidateCache } from "@/lib/simple-cache";
+import { RefreshCw } from "lucide-react";
 import { useFocusRow } from "@/hooks/use-focus-row";
 
 type BuchhaltungStatus = Database["public"]["Enums"]["buchhaltung_status"];
@@ -172,6 +173,16 @@ export default function Dashboard() {
     if (cached) setMandanten(cached as any);
     fetchMandanten();
   }, []);
+
+  const [refreshing, setRefreshing] = useState(false);
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    invalidateCache("dashboard:");
+    await Promise.all([fetchData(), fetchMandanten()]);
+    setRefreshing(false);
+  };
+
+
 
 
   const bearbeiterList = useMemo(() => {
@@ -381,7 +392,13 @@ export default function Dashboard() {
           <h1 className="text-2xl font-semibold tracking-tight text-foreground mt-1">Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-1">Alle offenen Buchhaltungen, Fristen und Prioritäten auf einen Blick.</p>
         </div>
-        <NeueBuchhaltungDialog mandanten={mandanten} onCreated={fetchData} />
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing} className="h-9">
+            <RefreshCw className={`h-4 w-4 mr-1.5 ${refreshing ? "animate-spin" : ""}`} />
+            Aktualisieren
+          </Button>
+          <NeueBuchhaltungDialog mandanten={mandanten} onCreated={fetchData} />
+        </div>
       </div>
 
 
