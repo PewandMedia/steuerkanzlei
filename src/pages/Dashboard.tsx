@@ -174,6 +174,16 @@ export default function Dashboard() {
     fetchMandanten();
   }, []);
 
+  const [refreshing, setRefreshing] = useState(false);
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    invalidateCache("dashboard:");
+    await Promise.all([fetchData(), fetchMandanten()]);
+    setRefreshing(false);
+  };
+
+
+
 
   const bearbeiterList = useMemo(() => {
     const names = new Set<string>();
