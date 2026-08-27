@@ -13,6 +13,7 @@ const ROLES = [
   {
     key: "Sekretariat",
     email: "demo-sekretariat@pewand-demo.de",
+    emailLeer: "leer-sekretariat@pewand-demo.de",
     title: "Sekretariat",
     subtitle: "Sabine — Empfang & Mandanten-Kontakt",
     description: "Mandanten kontaktieren, fehlende Belege anfordern, Fristen im Blick behalten.",
@@ -21,6 +22,7 @@ const ROLES = [
   {
     key: "Sachbearbeiter",
     email: "demo-sachbearbeiter@pewand-demo.de",
+    emailLeer: "leer-sachbearbeiter@pewand-demo.de",
     title: "Sachbearbeiter",
     subtitle: "Simon — Buchhaltung & Vorbereitung",
     description: "Belege erfassen, Buchhaltungen vorbereiten, zur Prüfung freigeben.",
@@ -29,12 +31,15 @@ const ROLES = [
   {
     key: "Chef",
     email: "demo-chef@pewand-demo.de",
+    emailLeer: "leer-chef@pewand-demo.de",
     title: "Chef / Steuerberater",
     subtitle: "Christina — Prüfung & Freigabe",
     description: "Buchhaltungen prüfen, freigeben oder zurückweisen, gesamte Kanzlei überblicken.",
     Icon: Crown,
   },
 ] as const;
+
+type Modus = "demo" | "leer";
 
 export default function Login() {
   usePageMeta(
@@ -43,6 +48,7 @@ export default function Login() {
   );
 
   const [loadingRole, setLoadingRole] = useState<string | null>(null);
+  const [modus, setModus] = useState<Modus>("demo");
 
   const loginAs = async (email: string, roleKey: string) => {
     setLoadingRole(roleKey);
@@ -56,6 +62,7 @@ export default function Login() {
       setLoadingRole(null);
     }
   };
+
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
@@ -117,7 +124,7 @@ export default function Login() {
           </ul>
         </div>
 
-        <p className="relative text-xs text-white/50">© 2026 Pewand Media · Kanzlei-Software</p>
+        <p className="relative text-xs text-white/50">© {new Date().getFullYear()} Pewand Media · Kanzlei-Software</p>
       </aside>
 
       {/* Rechte Seite — Rollen-Auswahl */}
@@ -140,18 +147,51 @@ export default function Login() {
             </h2>
             <p className="text-sm text-muted-foreground">
               Melden Sie sich mit einem Klick als eine der drei Rollen an. Alle
-              Daten sind Beispieldaten und werden regelmäßig zurückgesetzt.
+              Daten werden nachts automatisch zurückgesetzt.
             </p>
           </div>
 
+          {/* Umschalter: Beispieldaten vs. leeres System */}
           <div className="space-y-3">
-            {ROLES.map(({ key, email, title, subtitle, description, Icon }) => {
+            <div className="grid grid-cols-2 gap-1 rounded-xl border border-border bg-muted/50 p-1">
+              {([
+                { value: "demo" as const, label: "Mit Beispieldaten" },
+                { value: "leer" as const, label: "Ohne Beispieldaten" },
+              ]).map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setModus(opt.value)}
+                  aria-pressed={modus === opt.value}
+                  disabled={loadingRole !== null}
+                  className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:opacity-60 ${
+                    modus === opt.value
+                      ? "bg-brand text-brand-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {modus === "leer" && (
+              <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs leading-relaxed text-muted-foreground">
+                Leeres System: Sie starten ohne Mandanten und ohne Buchhaltungen und können
+                eigene Mandanten anlegen und den kompletten Workflow durchspielen.
+                Alle Eingaben werden jede Nacht zurückgesetzt.
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            {ROLES.map(({ key, email, emailLeer, title, subtitle, description, Icon }) => {
+              const loginEmail = modus === "leer" ? emailLeer : email;
               const loading = loadingRole === key;
               const disabled = loadingRole !== null;
               return (
                 <button
                   key={key}
-                  onClick={() => loginAs(email, key)}
+                  onClick={() => loginAs(loginEmail, key)}
                   disabled={disabled}
                   className="group w-full text-left rounded-xl border border-border bg-card p-4 transition-all hover:border-brand hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60 disabled:cursor-not-allowed"
                 >

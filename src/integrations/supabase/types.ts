@@ -99,6 +99,7 @@ export type Database = {
       }
       benutzer: {
         Row: {
+          arbeitsbereich: string
           email: string
           erstellt_am: string
           id: string
@@ -106,6 +107,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          arbeitsbereich?: string
           email: string
           erstellt_am?: string
           id?: string
@@ -113,6 +115,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          arbeitsbereich?: string
           email?: string
           erstellt_am?: string
           id?: string
@@ -318,6 +321,7 @@ export type Database = {
       }
       mandanten: {
         Row: {
+          arbeitsbereich: string
           dauerfristverlaengerung: boolean
           email: string | null
           erstellt_am: string
@@ -340,6 +344,7 @@ export type Database = {
           zugewiesener_bearbeiter_id: string | null
         }
         Insert: {
+          arbeitsbereich?: string
           dauerfristverlaengerung?: boolean
           email?: string | null
           erstellt_am?: string
@@ -362,6 +367,7 @@ export type Database = {
           zugewiesener_bearbeiter_id?: string | null
         }
         Update: {
+          arbeitsbereich?: string
           dauerfristverlaengerung?: boolean
           email?: string | null
           erstellt_am?: string
@@ -416,6 +422,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      buchhaltung_in_arbeitsbereich: {
+        Args: { _buchhaltung_id: string }
+        Returns: boolean
+      }
+      current_arbeitsbereich: { Args: never; Returns: string }
       current_benutzer_id: { Args: never; Returns: string }
       has_buchhaltung_access: {
         Args: { _buchhaltung_id: string; _user_id: string }
@@ -429,6 +440,10 @@ export type Database = {
         Returns: boolean
       }
       ist_freigegeben: { Args: { _user_id: string }; Returns: boolean }
+      mandant_in_arbeitsbereich: {
+        Args: { _mandant_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       benutzer_rolle: "Sekretariat" | "Sachbearbeiter" | "Chef"
