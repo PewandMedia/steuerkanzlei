@@ -256,12 +256,31 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 50 offen (noch Zeit): Monate M0, M-1, M-2 — Frist berechnet die App selbst
+    // 50 offen (noch Zeit): Monate werden fristbasiert gewählt — nur Monate,
+    // deren vom Trigger berechnete Frist noch mindestens 3 Tage in der Zukunft liegt.
+    // Frist = 10. des Folgemonats, mit Dauerfristverlängerung 10. des übernächsten.
     const openStatuses = ["Eingegangen", "In Bearbeitung", "In Bearbeitung", "In Prüfung"];
-    const openMonths: Array<[number, number]> = [monthsAgo(0), monthsAgo(1), monthsAgo(2)];
+    const MIN_PUFFER_TAGE = 3;
+    const fristFuer = (y: number, mo: number, dfv: boolean) =>
+      new Date(Date.UTC(y, mo - 1 + (dfv ? 2 : 1), 10));
+    // Für DFV / ohne DFV jeweils die zulässigen Monate ermitteln (M0 rückwärts).
+    const zulaessigeMonate = (dfv: boolean): Array<[number, number]> => {
+      const out: Array<[number, number]> = [];
+      const grenze = new Date(NOW.getTime() + MIN_PUFFER_TAGE * 86400000);
+      for (let n = 0; n <= 6; n++) {
+        const [y, mo] = monthsAgo(n);
+        if (fristFuer(y, mo, dfv).getTime() > grenze.getTime()) out.push([y, mo]);
+      }
+      return out;
+    };
+    const offeneMonateDfv = zulaessigeMonate(true);
+    const offeneMonateOhne = zulaessigeMonate(false);
+
     for (let i = 0; i < 50; i++) {
       const m = mandantenInfo[(i * 11 + 3) % 150];
-      const [y, mo] = openMonths[i % openMonths.length];
+      const pool = m.dfv ? offeneMonateDfv : offeneMonateOhne;
+      if (pool.length === 0) continue;
+      const [y, mo] = pool[i % pool.length];
       const key = monthKey(y, mo);
       if (usedMonths[m.id].has(key)) continue;
       usedMonths[m.id].add(key);
@@ -274,6 +293,7 @@ Deno.serve(async (req) => {
         faellig_am_manuell: false,
       });
     }
+
 
     // Insert buchhaltungen in chunks and collect ids + info for follow-ups
     const insertedBh: Array<{ id: string; sbId: string; status: string; monat: string }> = [];
