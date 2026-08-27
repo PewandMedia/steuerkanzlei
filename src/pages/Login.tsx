@@ -124,7 +124,7 @@ export default function Login() {
           </ul>
         </div>
 
-        <p className="relative text-xs text-white/50">© 2026 Pewand Media · Kanzlei-Software</p>
+        <p className="relative text-xs text-white/50">© {new Date().getFullYear()} Pewand Media · Kanzlei-Software</p>
       </aside>
 
       {/* Rechte Seite — Rollen-Auswahl */}
