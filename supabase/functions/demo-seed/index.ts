@@ -259,7 +259,8 @@ Deno.serve(async (req) => {
     // 50 offen (noch Zeit): Monate werden fristbasiert gewählt — nur Monate,
     // deren vom Trigger berechnete Frist noch mindestens 3 Tage in der Zukunft liegt.
     // Frist = 10. des Folgemonats, mit Dauerfristverlängerung 10. des übernächsten.
-    const openStatuses = ["Eingegangen", "In Bearbeitung", "In Bearbeitung", "In Prüfung"];
+    // Verteilung: 10x Eingegangen, 20x In Bearbeitung, 20x In Prüfung (beim Chef zur Freigabe)
+    const openStatuses = ["Eingegangen", "In Bearbeitung", "In Prüfung", "In Bearbeitung", "In Prüfung"];
     const MIN_PUFFER_TAGE = 3;
     const fristFuer = (y: number, mo: number, dfv: boolean) =>
       new Date(Date.UTC(y, mo - 1 + (dfv ? 2 : 1), 10));
@@ -336,6 +337,29 @@ Deno.serve(async (req) => {
     }
     if (kommentarRows.length > 0) await chunkedInsert(svc, "kommentare", kommentarRows, 500);
 
+    // ---- 7b. 6 vom Chef zurückgewiesene Buchhaltungen ----
+    const rueckGruende = [
+      "Kontoauszüge für den letzten Monat fehlen — bitte nachreichen.",
+      "Kontierung der Bewirtungsbelege ist falsch — bitte korrigieren.",
+      "Eine Eingangsrechnung wurde doppelt erfasst.",
+      "Umsatzsteuer bei den Auslandsrechnungen nicht korrekt behandelt.",
+      "Kassenbuch weist eine Differenz auf — bitte abstimmen.",
+      "Privatentnahmen sind nicht sauber abgegrenzt.",
+    ];
+    const rueckKandidaten = insertedBh.filter((b) => b.status === "In Bearbeitung").slice(0, 6);
+    const rueckKommentare: any[] = [];
+    for (let i = 0; i < rueckKandidaten.length; i++) {
+      const bh = rueckKandidaten[i];
+      const grund = rueckGruende[i % rueckGruende.length];
+      const zurueck = new Date(NOW.getTime() - randInt(1, 10) * 86400000);
+      await svc
+        .from("buchhaltungen")
+        .update({ zurueckgewiesen_am: zurueck.toISOString(), notizen: grund })
+        .eq("id", bh.id);
+      rueckKommentare.push({ buchhaltung_id: bh.id, user_id: chefBid, kommentar: "Zurückgewiesen: " + grund });
+    }
+    if (rueckKommentare.length > 0) await chunkedInsert(svc, "kommentare", rueckKommentare, 100);
+
     // ---- 8. Co-Bearbeiter für 12 Buchhaltungen (Chef als Zweitbearbeiter) ----
     const coRows: any[] = [];
     const coCount = 12;
@@ -365,6 +389,8 @@ Deno.serve(async (req) => {
       buchhaltungen: insertedBh.length,
       erledigt: insertedBh.filter((b) => b.status === "Buchhaltung erledigt").length,
       offen: insertedBh.filter((b) => b.status !== "Buchhaltung erledigt").length,
+      in_pruefung: insertedBh.filter((b) => b.status === "In Prüfung").length,
+      zurueckgewiesen: rueckKandidaten.length,
       co_bearbeiter: dedupCo.length,
     });
 
