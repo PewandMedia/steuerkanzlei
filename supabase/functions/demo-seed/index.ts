@@ -216,7 +216,8 @@ Deno.serve(async (req) => {
       const count = perMandantErledigt[mi];
       // Pick `count` different months from erledigtMonths, starting from a rotating offset
       for (let k = 0; k < count; k++) {
-        const idx = (mi * 3 + k) % erledigtMonths.length;
+        // Schrittweite 5 ist teilerfremd zu 18 -> Streuung über alle 18 Monate
+        const idx = (mi * 5 + k) % erledigtMonths.length;
         const [y, mo] = erledigtMonths[idx];
         const key = monthKey(y, mo);
         if (usedMonths[m.id].has(key)) continue;
