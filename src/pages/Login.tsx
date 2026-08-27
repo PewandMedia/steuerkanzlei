@@ -191,7 +191,7 @@ export default function Login() {
               return (
                 <button
                   key={key}
-                  onClick={() => loginAs(email, key)}
+                  onClick={() => loginAs(loginEmail, key)}
                   disabled={disabled}
                   className="group w-full text-left rounded-xl border border-border bg-card p-4 transition-all hover:border-brand hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60 disabled:cursor-not-allowed"
                 >
