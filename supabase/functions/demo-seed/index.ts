@@ -13,10 +13,14 @@ const corsHeaders = {
 const DEMO_PASSWORD = "demo-pewand-2026!";
 
 const ROLE_USERS = [
-  { email: "demo-sekretariat@pewand-demo.de", name: "Sabine Sekretariat", rolle: "Sekretariat" },
-  { email: "demo-sachbearbeiter@pewand-demo.de", name: "Simon Sachbearbeiter", rolle: "Sachbearbeiter" },
-  { email: "demo-chef@pewand-demo.de", name: "Christina Chef", rolle: "Chef" },
+  { email: "demo-sekretariat@pewand-demo.de", name: "Sabine Sekretariat", rolle: "Sekretariat", arbeitsbereich: "demo" },
+  { email: "demo-sachbearbeiter@pewand-demo.de", name: "Simon Sachbearbeiter", rolle: "Sachbearbeiter", arbeitsbereich: "demo" },
+  { email: "demo-chef@pewand-demo.de", name: "Christina Chef", rolle: "Chef", arbeitsbereich: "demo" },
+  { email: "leer-sekretariat@pewand-demo.de", name: "Sabine Sekretariat", rolle: "Sekretariat", arbeitsbereich: "leer" },
+  { email: "leer-sachbearbeiter@pewand-demo.de", name: "Simon Sachbearbeiter", rolle: "Sachbearbeiter", arbeitsbereich: "leer" },
+  { email: "leer-chef@pewand-demo.de", name: "Christina Chef", rolle: "Chef", arbeitsbereich: "leer" },
 ] as const;
+
 
 
 function j(status: number, body: unknown) {
