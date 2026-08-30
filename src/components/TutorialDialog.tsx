@@ -52,9 +52,9 @@ const pipeline: Database["public"]["Enums"]["buchhaltung_status"][] = [
 ];
 
 const uebergaenge: { text: string }[] = [
-  { text: "Sachbearbeiter · Button „Annehmen\u201c" },
-  { text: "Sachbearbeiter · Button „Zur Prüfung senden\u201c" },
-  { text: "Chef · Button „Freigeben\u201c" },
+  { text: "Sachbearbeiter · Button „Annehmen“" },
+  { text: "Sachbearbeiter · Button „Zur Prüfung senden“" },
+  { text: "Chef · Button „Freigeben“" },
 ];
 
 export function TutorialDialog({ open, onOpenChange, rolle, onStartTour }: TutorialDialogProps) {
@@ -127,11 +127,11 @@ export function TutorialDialog({ open, onOpenChange, rolle, onStartTour }: Tutor
               Warten auf Mandant
             </span>
             <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-              Seitenast von „In Bearbeitung\u201c: Sachbearbeiter · Button „Unvollständig\u201c (Notiz ist
-              Pflichtfeld). Zurück mit Sachbearbeiter · Button „Weiterarbeiten\u201c.
+              Seitenast von „In Bearbeitung“: Sachbearbeiter · Button „Unvollständig“ (Notiz ist
+              Pflichtfeld). Zurück mit Sachbearbeiter · Button „Weiterarbeiten“.
             </p>
             <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-              Aus „In Prüfung\u201c zurück nach „In Bearbeitung\u201c: Chef · Button „Zurückweisen\u201c.
+              Aus „In Prüfung“ zurück nach „In Bearbeitung“: Chef · Button „Zurückweisen“.
             </p>
           </div>
         </div>
