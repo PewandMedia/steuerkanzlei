@@ -1,8 +1,53 @@
+import { GraduationCap } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { ZurueckweisungAlert } from "@/components/ZurueckweisungAlert";
 import { BrandLogo } from "@/components/BrandLogo";
+import { Button } from "@/components/ui/button";
+import { TutorialDialog } from "@/components/TutorialDialog";
+import { TutorialTour } from "@/components/TutorialTour";
+import { useTutorial } from "@/hooks/use-tutorial";
+import { useAuth } from "@/hooks/use-auth";
+import { getTourSteps } from "@/lib/tutorial-steps";
 
+function TutorialControls() {
+  const { rolle, benutzerName } = useAuth();
+  const { introOpen, tourRunning, seen, openIntro, closeIntro, startTour, endTour } = useTutorial();
+
+  return (
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={openIntro}
+        aria-label="Tutorial starten"
+        className="relative ml-auto h-9 rounded-full"
+      >
+        <GraduationCap className="h-4 w-4 sm:mr-1.5" />
+        <span className="hidden sm:inline">Tutorial</span>
+        {!seen && (
+          <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-75" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-brand" />
+          </span>
+        )}
+      </Button>
+
+      <TutorialDialog
+        open={introOpen}
+        onOpenChange={(o) => {
+          if (!o) closeIntro();
+        }}
+        rolle={rolle}
+        onStartTour={startTour}
+      />
+
+      {tourRunning && (
+        <TutorialTour steps={getTourSteps(rolle, benutzerName)} onFinish={endTour} />
+      )}
+    </>
+  );
+}
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   // Sidebar ab 1280 px standardmäßig offen — passt zu typischen Desktop-Auflösungen.
@@ -21,7 +66,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <BrandLogo className="h-7 w-7 shrink-0 border border-border" />
               <span className="hidden sm:inline text-sm font-semibold tracking-[0.28em] text-foreground truncate">PEWAND MEDIA</span>
             </div>
-
+            <TutorialControls />
           </header>
           <main className="flex-1 min-w-0 overflow-auto">
             <div className="mx-auto w-full max-w-[1600px]">
@@ -33,3 +78,4 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
+
