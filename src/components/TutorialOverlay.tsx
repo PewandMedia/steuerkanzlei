@@ -1,22 +1,23 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
-  AlertTriangle,
   ArrowRight,
   CheckCircle2,
   ChevronLeft,
-  Gauge,
-  Pause,
-  Play,
+  Info,
+  MousePointerClick,
   RotateCcw,
   UserRoundCog,
   X,
 } from "lucide-react";
 import {
+  ABSCHNITTE,
+  ANZAHL_ABSCHNITTE,
   SCHRITTE,
   ersterSchrittDesAbschnitts,
+  schrittImAbschnitt,
   type SchrittKontext,
 } from "@/lib/tutorial-schritte";
 import {
@@ -25,17 +26,91 @@ import {
   schreibeLauf,
   type TutorialLauf,
 } from "@/lib/tutorial-lauf";
+import { getController } from "@/lib/tutorial-bus";
 
 interface Props {
   lauf: TutorialLauf;
   onBeenden: () => void;
 }
 
-const TEMPI = [
-  { wert: 0.6, label: "Langsam" },
-  { wert: 1, label: "Normal" },
-  { wert: 1.8, label: "Schnell" },
-];
+const KARTEN_BREITE = 320;
+const ABSTAND = 16;
+const RAND = 12;
+
+interface Box {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+  right: number;
+  bottom: number;
+}
+
+const toBox = (r: DOMRect): Box => ({
+  top: r.top,
+  left: r.left,
+  width: r.width,
+  height: r.height,
+  right: r.right,
+  bottom: r.bottom,
+});
+
+function berechnePosition(
+  hindernis: Box | null,
+  kartenHoehe: number,
+): React.CSSProperties {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const schmal = vw < 900;
+  const breite = Math.min(KARTEN_BREITE, vw - RAND * 2);
+
+  if (schmal || !hindernis) {
+    return {
+      left: "50%",
+      bottom: RAND,
+      transform: "translateX(-50%)",
+      width: breite,
+    };
+  }
+
+  const clampTop = (t: number) => Math.max(RAND, Math.min(t, vh - kartenHoehe - RAND));
+  const clampLeft = (l: number) => Math.max(RAND, Math.min(l, vw - breite - RAND));
+
+  // rechts
+  if (vw - hindernis.right - ABSTAND - RAND >= breite) {
+    return { top: clampTop(hindernis.top), left: hindernis.right + ABSTAND, width: breite };
+  }
+  // links
+  if (hindernis.left - ABSTAND - RAND >= breite) {
+    return {
+      top: clampTop(hindernis.top),
+      left: hindernis.left - ABSTAND - breite,
+      width: breite,
+    };
+  }
+  // darunter
+  if (vh - hindernis.bottom - ABSTAND - RAND >= kartenHoehe) {
+    return { top: hindernis.bottom + ABSTAND, left: clampLeft(hindernis.left), width: breite };
+  }
+  // darüber
+  if (hindernis.top - ABSTAND - RAND >= kartenHoehe) {
+    return {
+      top: hindernis.top - ABSTAND - kartenHoehe,
+      left: clampLeft(hindernis.left),
+      width: breite,
+    };
+  }
+  // Notfall: schmaler an den freieren Rand
+  const schmalBreite = Math.min(300, Math.max(240, vw - hindernis.right - RAND * 2));
+  const rechtsFrei = vw - hindernis.right;
+  const linksFrei = hindernis.left;
+  if (Math.max(rechtsFrei, linksFrei) >= 240) {
+    return rechtsFrei >= linksFrei
+      ? { top: clampTop(hindernis.top), left: vw - schmalBreite - RAND, width: schmalBreite }
+      : { top: clampTop(hindernis.top), left: RAND, width: schmalBreite };
+  }
+  return { left: "50%", bottom: RAND, transform: "translateX(-50%)", width: breite };
+}
 
 export function TutorialOverlay({ lauf, onBeenden }: Props) {
   const navigate = useNavigate();
@@ -44,22 +119,17 @@ export function TutorialOverlay({ lauf, onBeenden }: Props) {
   const startIndex = useMemo(() => ersterSchrittDesAbschnitts(lauf.abschnitt), [lauf.abschnitt]);
   const abschnittStart = useRef(startIndex);
   const [index, setIndex] = useState(startIndex);
-  const [laufState, setLaufState] = useState<TutorialLauf>(lauf);
+  const [, setLaufState] = useState<TutorialLauf>(lauf);
   const laufRef = useRef<TutorialLauf>(lauf);
-  const [spielt, setSpielt] = useState(true);
-  const [tempo, setTempo] = useState(1);
-  const tempoRef = useRef(1);
-  tempoRef.current = tempo;
-  const [rect, setRect] = useState<DOMRect | null>(null);
-  const [fehler, setFehler] = useState<string | null>(null);
-  const [beschaeftigt, setBeschaeftigt] = useState(false);
-  const beschaeftigtRef = useRef(false);
-  const ausgefuehrt = useRef<Set<string>>(new Set());
+  const [rect, setRect] = useState<Box | null>(null);
+  const [dialogBox, setDialogBox] = useState<Box | null>(null);
+  const [zielFehlt, setZielFehlt] = useState(false);
+  const karteRef = useRef<HTMLDivElement | null>(null);
+  const [kartenHoehe, setKartenHoehe] = useState(260);
 
   const schritt = SCHRITTE[index];
-  const istKarte = !!schritt?.uebergabeZu || !!schritt?.abschluss;
+  const istKarte = !!schritt?.uebergabeZu || !!schritt?.abschluss || !!schritt?.intro;
 
-  // ── Laufzustand ───────────────────────────────────────────
   const merke = useCallback((patch: Partial<TutorialLauf>): TutorialLauf => {
     const neu = schreibeLauf({ ...laufRef.current, ...patch });
     laufRef.current = neu;
@@ -67,6 +137,17 @@ export function TutorialOverlay({ lauf, onBeenden }: Props) {
     return neu;
   }, []);
 
+  const kontext: SchrittKontext = useMemo(
+    () => ({
+      get lauf() {
+        return laufRef.current;
+      },
+      merke,
+    }),
+    [merke],
+  );
+
+  // ── Laufzustand ───────────────────────────────────────────
   useEffect(() => {
     const s = SCHRITTE[index];
     if (!s) return;
@@ -83,116 +164,107 @@ export function TutorialOverlay({ lauf, onBeenden }: Props) {
     if (s?.route && location.pathname !== s.route) navigate(s.route);
   }, [index, location.pathname, navigate]);
 
-  // ── Spotlight-Position laufend messen ─────────────────────
+  // ── Erkennung des angelegten Datensatzes ──────────────────
+  const [erkanntGeprueft, setErkanntGeprueft] = useState(false);
+  useEffect(() => {
+    const s = SCHRITTE[index];
+    setErkanntGeprueft(false);
+    if (!s?.erkennen) return;
+    let abgebrochen = false;
+    void (async () => {
+      try {
+        await s.erkennen!(kontext);
+      } catch {
+        /* nie hängenbleiben */
+      }
+      if (!abgebrochen) {
+        setErkanntGeprueft(true);
+        const dash = getController("dashboard");
+        if (dash) {
+          await dash.aktualisieren().catch(() => undefined);
+          if (laufRef.current.buchhaltungId) dash.fokus(laufRef.current.buchhaltungId);
+        }
+      }
+    })();
+    return () => {
+      abgebrochen = true;
+    };
+  }, [index, kontext]);
+
+  // Erkennungsschritt automatisch überspringen, wenn eindeutig erkannt.
+  useEffect(() => {
+    const s = SCHRITTE[index];
+    if (s?.zeilenwahl && erkanntGeprueft && laufRef.current.buchhaltungId) {
+      setIndex((i) => Math.min(i + 1, SCHRITTE.length - 1));
+    }
+  }, [index, erkanntGeprueft]);
+
+  // Zeilenwahl per Klick des Nutzers
+  useEffect(() => {
+    const s = SCHRITTE[index];
+    if (!s?.zeilenwahl) return;
+    const onClick = (e: MouseEvent) => {
+      const el = (e.target as HTMLElement | null)?.closest("[data-buchhaltung-id]");
+      const id = el?.getAttribute("data-buchhaltung-id");
+      if (!id) return;
+      merke({ buchhaltungId: id });
+      setIndex((i) => Math.min(i + 1, SCHRITTE.length - 1));
+    };
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, [index, merke]);
+
+  // ── Position von Ziel und offenem Dialog messen ───────────
   useEffect(() => {
     const s = SCHRITTE[index];
     const selector = s?.ziel?.(laufRef.current) ?? null;
-    if (!selector) {
-      setRect(null);
-      return;
-    }
     let gescrollt = false;
+    let seit = Date.now();
     const messen = () => {
+      const dialog = document.querySelector(
+        '[role="dialog"]:not([data-tutorial-karte])',
+      ) as HTMLElement | null;
+      setDialogBox(dialog ? toBox(dialog.getBoundingClientRect()) : null);
+
+      if (!selector) {
+        setRect(null);
+        setZielFehlt(false);
+        return;
+      }
       const el = document.querySelector(selector) as HTMLElement | null;
       if (!el) {
         setRect(null);
+        setZielFehlt(Date.now() - seit > 1200);
         return;
       }
+      seit = Date.now();
+      setZielFehlt(false);
       if (!gescrollt) {
         gescrollt = true;
         el.scrollIntoView({ behavior: "smooth", block: "center" });
       }
-      setRect(el.getBoundingClientRect());
+      setRect(toBox(el.getBoundingClientRect()));
     };
     messen();
     const iv = window.setInterval(messen, 250);
     window.addEventListener("resize", messen);
+    window.addEventListener("scroll", messen, true);
     return () => {
       window.clearInterval(iv);
       window.removeEventListener("resize", messen);
+      window.removeEventListener("scroll", messen, true);
     };
-  }, [index, laufState.buchhaltungId]);
+  }, [index]);
 
-  // ── Hilfsfunktionen für Schritt-Aktionen ──────────────────
-  const warte = useCallback(
-    (ms: number) => new Promise<void>((r) => setTimeout(r, Math.max(0, ms / tempoRef.current))),
-    [],
-  );
+  useLayoutEffect(() => {
+    const h = karteRef.current?.offsetHeight;
+    if (h && Math.abs(h - kartenHoehe) > 8) setKartenHoehe(h);
+  });
 
-  const warteAufElement = useCallback(
-    async (selector: string, timeoutMs = 10000): Promise<HTMLElement> => {
-      const ende = Date.now() + timeoutMs;
-      for (;;) {
-        const el = document.querySelector(selector) as HTMLElement | null;
-        if (el) return el;
-        if (Date.now() > ende) throw new Error("Ein erwartetes Bedienelement wurde nicht gefunden.");
-        await new Promise((r) => setTimeout(r, 120));
-      }
-    },
-    [],
-  );
-
-  const klicke = useCallback(
-    async (selector: string) => {
-      const el = await warteAufElement(selector);
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-      await new Promise((r) => setTimeout(r, 350));
-      if ((el as HTMLButtonElement).disabled) {
-        throw new Error("Die Schaltfläche ist derzeit nicht verfügbar.");
-      }
-      el.click();
-    },
-    [warteAufElement],
-  );
-
-  const tippe = useCallback(
-    async (setter: (wert: string) => void, text: string) => {
-      for (let i = 1; i <= text.length; i++) {
-        setter(text.slice(0, i));
-        await new Promise((r) => setTimeout(r, 24 / tempoRef.current));
-      }
-    },
-    [],
-  );
-
-  const kontext: SchrittKontext = useMemo(
-    () => ({
-      get lauf() {
-        return laufRef.current;
-      },
-      merke,
-      gehe: (pfad: string) => navigate(pfad),
-      warte,
-      tippe,
-      klicke,
-      warteAufElement,
-    }),
-    [merke, navigate, warte, tippe, klicke, warteAufElement],
-  );
-
-  // ── Vorwärts ──────────────────────────────────────────────
-  const weiter = useCallback(async () => {
+  // ── Steuerung ─────────────────────────────────────────────
+  const weiter = useCallback(() => {
     const s = SCHRITTE[index];
-    if (!s || beschaeftigtRef.current) return;
-
-    if (s.aktion && !ausgefuehrt.current.has(s.id)) {
-      ausgefuehrt.current.add(s.id);
-      beschaeftigtRef.current = true;
-      setBeschaeftigt(true);
-      try {
-        await s.aktion(kontext);
-      } catch (e) {
-        ausgefuehrt.current.delete(s.id);
-        beschaeftigtRef.current = false;
-        setBeschaeftigt(false);
-        setSpielt(false);
-        setFehler(e instanceof Error ? e.message : "Unbekannter Fehler.");
-        return;
-      }
-      beschaeftigtRef.current = false;
-      setBeschaeftigt(false);
-    }
-
+    if (!s) return;
     if (s.abschluss) {
       loescheLauf();
       schreibeGesehen();
@@ -200,17 +272,13 @@ export function TutorialOverlay({ lauf, onBeenden }: Props) {
       return;
     }
     setIndex((i) => Math.min(i + 1, SCHRITTE.length - 1));
-  }, [index, kontext, onBeenden]);
+  }, [index, onBeenden]);
 
   const zurueck = useCallback(() => {
-    setFehler(null);
-    setSpielt(false);
     setIndex((i) => Math.max(abschnittStart.current, i - 1));
   }, []);
 
   const neustart = useCallback(() => {
-    setFehler(null);
-    ausgefuehrt.current.clear();
     loescheLauf();
     onBeenden();
   }, [onBeenden]);
@@ -227,16 +295,6 @@ export function TutorialOverlay({ lauf, onBeenden }: Props) {
     onBeenden();
   }, [index, merke, onBeenden]);
 
-  // ── Autoplay ──────────────────────────────────────────────
-  useEffect(() => {
-    const s = SCHRITTE[index];
-    if (!s || !spielt || fehler || s.uebergabeZu || s.abschluss) return;
-    const t = window.setTimeout(() => {
-      void weiter();
-    }, (s.lesezeit ?? 4500) / tempo);
-    return () => window.clearTimeout(t);
-  }, [index, spielt, tempo, fehler, weiter]);
-
   // ── Tastatursteuerung ─────────────────────────────────────
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -245,13 +303,10 @@ export function TutorialOverlay({ lauf, onBeenden }: Props) {
         beenden();
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
-        void weiter();
+        weiter();
       } else if (e.key === "ArrowLeft") {
         e.preventDefault();
         zurueck();
-      } else if (e.key === " ") {
-        e.preventDefault();
-        setSpielt((v) => !v);
       }
     };
     window.addEventListener("keydown", onKey, true);
@@ -260,105 +315,41 @@ export function TutorialOverlay({ lauf, onBeenden }: Props) {
 
   if (!schritt) return null;
 
-  const gesamt = SCHRITTE.length;
-  const fortschritt = Math.round(((index + 1) / gesamt) * 100);
+  const [nr, gesamtImAbschnitt] = schrittImAbschnitt(index);
+  const fortschritt = Math.round((nr / gesamtImAbschnitt) * 100);
+  const abschnittInfo = ABSCHNITTE[schritt.abschnitt - 1];
+
+  const kopfZeile = (
+    <p className="text-[10px] font-semibold uppercase tracking-widest text-brand">
+      Teil {schritt.abschnitt} von {ANZAHL_ABSCHNITTE} · {schritt.rolle}
+    </p>
+  );
 
   const steuerung = (
-    <div className="flex flex-wrap items-center gap-1.5 pt-3">
+    <div className="flex items-center gap-2 pt-3">
       <Button
         size="sm"
-        variant="ghost"
-        className="h-8 px-2"
+        variant="outline"
+        className="h-8"
         onClick={zurueck}
-        disabled={index <= abschnittStart.current || beschaeftigt}
-        aria-label="Vorheriger Schritt"
+        disabled={index <= abschnittStart.current}
       >
-        <ChevronLeft className="h-4 w-4" />
+        <ChevronLeft className="h-4 w-4 mr-1" /> Zurück
       </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        className="h-8 px-2"
-        onClick={() => setSpielt((v) => !v)}
-        aria-label={spielt ? "Tutorial pausieren" : "Tutorial fortsetzen"}
-      >
-        {spielt ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-      </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        className="h-8 px-2 gap-1 text-xs"
-        onClick={() => {
-          const i = TEMPI.findIndex((t) => t.wert === tempo);
-          setTempo(TEMPI[(i + 1) % TEMPI.length].wert);
-        }}
-        aria-label="Abspielgeschwindigkeit ändern"
-      >
-        <Gauge className="h-4 w-4" />
-        {TEMPI.find((t) => t.wert === tempo)?.label}
-      </Button>
-      <Button
-        size="sm"
-        className="h-8 ml-auto"
-        onClick={() => void weiter()}
-        disabled={beschaeftigt}
-      >
-        {beschaeftigt ? "Läuft…" : "Weiter"}
+      <Button size="sm" className="h-8 ml-auto" onClick={weiter}>
+        Weiter
         <ArrowRight className="h-4 w-4 ml-1" />
       </Button>
     </div>
   );
 
-  const kopf = (
-    <div className="flex items-start gap-2">
-      <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-brand">
-          Schritt {index + 1} von {gesamt} · {schritt.rolle}
-        </p>
-        <h3 className="text-base font-semibold text-foreground mt-0.5">{schritt.titel}</h3>
-      </div>
-      <Button
-        size="icon"
-        variant="ghost"
-        className="h-7 w-7 shrink-0 -mr-1 -mt-1"
-        onClick={beenden}
-        aria-label="Tutorial schließen"
-      >
-        <X className="h-4 w-4" />
-      </Button>
-    </div>
-  );
-
-  const fehlerBlock = fehler && (
-    <div className="mt-3 rounded-md border border-destructive/40 bg-destructive/5 p-2.5">
-      <p className="text-xs font-semibold text-destructive flex items-center gap-1.5">
-        <AlertTriangle className="h-3.5 w-3.5" /> Schritt konnte nicht ausgeführt werden
-      </p>
-      <p className="text-xs text-foreground mt-1">{fehler}</p>
-      <div className="flex gap-1.5 mt-2">
-        <Button
-          size="sm"
-          className="h-7 text-xs"
-          onClick={() => {
-            setFehler(null);
-            void weiter();
-          }}
-        >
-          Erneut versuchen
-        </Button>
-        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={neustart}>
-          <RotateCcw className="h-3.5 w-3.5 mr-1" /> Abbrechen
-        </Button>
-      </div>
-    </div>
-  );
-
-  // ── Übergabe- und Abschlusskarte ──────────────────────────
+  // ── Einstiegs-, Übergabe- und Abschlusskarte ──────────────
   if (istKarte) {
     return createPortal(
       <div
         className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
         role="dialog"
+        data-tutorial-karte
         aria-modal="true"
         aria-label={schritt.titel}
       >
@@ -367,18 +358,31 @@ export function TutorialOverlay({ lauf, onBeenden }: Props) {
             <div className="rounded-lg bg-brand/15 p-2 text-brand">
               {schritt.abschluss ? (
                 <CheckCircle2 className="h-5 w-5" />
+              ) : schritt.intro ? (
+                <Info className="h-5 w-5" />
               ) : (
                 <UserRoundCog className="h-5 w-5" />
               )}
             </div>
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                {schritt.abschluss ? "Fertig" : "Rollenwechsel"}
+                {schritt.abschluss
+                  ? "Fertig"
+                  : schritt.intro
+                    ? `Teil ${schritt.abschnitt} von ${ANZAHL_ABSCHNITTE}`
+                    : "Rollenwechsel"}
               </p>
-              <h3 className="text-lg font-semibold text-foreground leading-tight">{schritt.titel}</h3>
+              <h3 className="text-lg font-semibold text-foreground leading-tight">
+                {schritt.titel}
+              </h3>
             </div>
           </div>
           <p className="text-sm text-muted-foreground mt-4 leading-relaxed">{schritt.text}</p>
+          {schritt.intro && (
+            <p className="text-xs text-muted-foreground mt-2">
+              {gesamtImAbschnitt - 1} Schritte in diesem Teil.
+            </p>
+          )}
           <div className="flex flex-wrap gap-2 mt-6">
             {schritt.abschluss ? (
               <>
@@ -393,6 +397,15 @@ export function TutorialOverlay({ lauf, onBeenden }: Props) {
                 </Button>
                 <Button variant="outline" onClick={neustart}>
                   <RotateCcw className="h-4 w-4 mr-1.5" /> Von vorn beginnen
+                </Button>
+              </>
+            ) : schritt.intro ? (
+              <>
+                <Button onClick={weiter}>
+                  Los geht’s <ArrowRight className="h-4 w-4 ml-1.5" />
+                </Button>
+                <Button variant="ghost" onClick={beenden}>
+                  Später
                 </Button>
               </>
             ) : (
@@ -412,51 +425,107 @@ export function TutorialOverlay({ lauf, onBeenden }: Props) {
 
   // ── Spotlight ─────────────────────────────────────────────
   const pad = 8;
-  const kartenBreite = 380;
-  let kartenStil: React.CSSProperties;
-  if (rect) {
-    const untenPlatz = window.innerHeight - rect.bottom;
-    const oben = untenPlatz > 260 ? rect.bottom + pad + 12 : Math.max(12, rect.top - 260);
-    const links = Math.min(
-      Math.max(12, rect.left),
-      Math.max(12, window.innerWidth - kartenBreite - 12),
-    );
-    kartenStil = { top: oben, left: links, width: Math.min(kartenBreite, window.innerWidth - 24) };
-  } else {
-    kartenStil = {
-      bottom: 24,
-      left: "50%",
-      transform: "translateX(-50%)",
-      width: Math.min(kartenBreite, window.innerWidth - 24),
-    };
-  }
+  const hindernis: Box | null = dialogBox ?? rect;
+  const kartenStil = berechnePosition(hindernis, kartenHoehe);
+
+  const wartetAufZeile = !!schritt.zeilenwahl;
 
   return createPortal(
     <div className="fixed inset-0 z-[100] pointer-events-none" aria-live="polite">
-      {rect ? (
+      {rect && (
         <div
-          className="absolute rounded-lg ring-2 ring-brand transition-all duration-300 pointer-events-none"
+          className="absolute rounded-lg ring-2 ring-brand transition-all duration-200 pointer-events-none"
           style={{
             top: rect.top - pad,
             left: rect.left - pad,
             width: rect.width + pad * 2,
             height: rect.height + pad * 2,
-            boxShadow: "0 0 0 9999px rgba(2,6,23,0.55)",
+            boxShadow: "0 0 0 9999px rgba(2,6,23,0.45)",
           }}
         />
-      ) : (
-        <div className="absolute inset-0 bg-slate-950/40" />
       )}
 
       <div
-        className="absolute pointer-events-auto rounded-xl border border-border bg-card p-4 shadow-2xl max-sm:!left-3 max-sm:!right-3 max-sm:!top-auto max-sm:!bottom-3 max-sm:!w-auto max-sm:!transform-none"
+        ref={karteRef}
+        data-tutorial-karte
+        className="fixed pointer-events-auto rounded-xl border border-border bg-card p-4 shadow-2xl max-[900px]:!left-3 max-[900px]:!right-3 max-[900px]:!top-auto max-[900px]:!bottom-3 max-[900px]:!w-auto max-[900px]:!transform-none"
         style={kartenStil}
-        role="dialog"
+        role="region"
         aria-label={schritt.titel}
       >
-        {kopf}
+        <div className="flex items-start gap-2">
+          <div className="min-w-0 flex-1">
+            {kopfZeile}
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              Schritt {nr} von {gesamtImAbschnitt}
+              {abschnittInfo ? ` · ${abschnittInfo.titel}` : ""}
+            </p>
+            <h3 className="text-base font-semibold text-foreground mt-1">{schritt.titel}</h3>
+          </div>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7 shrink-0 -mr-1 -mt-1"
+            onClick={beenden}
+            aria-label="Tutorial schließen"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
         <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{schritt.text}</p>
-        {fehlerBlock}
+
+        {wartetAufZeile && (
+          <div className="mt-3 rounded-md border border-brand/40 bg-brand/10 p-2.5">
+            <p className="text-xs font-semibold text-brand flex items-center gap-1.5">
+              <MousePointerClick className="h-3.5 w-3.5" />
+              Jetzt klicken: die Zeile, die Sie gerade angelegt haben
+            </p>
+          </div>
+        )}
+
+        {!wartetAufZeile && schritt.aufforderung && !zielFehlt && (
+          <div className="mt-3 rounded-md border border-brand/40 bg-brand/10 p-2.5">
+            <p className="text-sm font-semibold text-brand flex items-center gap-1.5">
+              <MousePointerClick className="h-4 w-4 shrink-0" />
+              {schritt.aufforderung}
+            </p>
+          </div>
+        )}
+
+        {!zielFehlt && schritt.beispiele && (
+          <div className="mt-2.5 rounded-md border border-border bg-muted/40 p-2.5">
+            <ul className="space-y-0.5">
+              {schritt.beispiele.map((b) => (
+                <li key={b.label} className="text-xs text-foreground">
+                  <span className="text-muted-foreground">{b.label}:</span> {b.wert}
+                </li>
+              ))}
+            </ul>
+            <p className="text-[11px] text-muted-foreground mt-1.5">
+              Eigene Werte gehen genauso.
+            </p>
+          </div>
+        )}
+
+        {zielFehlt && (
+          <div className="mt-3 rounded-md border border-border bg-muted/50 p-2.5">
+            <p className="text-xs text-foreground">
+              Dieser Schritt ist noch nicht ausgeführt.{" "}
+              {schritt.fehlendHinweis ?? "Bitte führen Sie zuerst den vorigen Schritt aus."}
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs mt-2"
+              onClick={zurueck}
+              disabled={index <= abschnittStart.current}
+            >
+              <ChevronLeft className="h-3.5 w-3.5 mr-1" /> Zurück zum vorigen Schritt
+            </Button>
+          </div>
+        )}
+
         <div className="mt-3 h-1 w-full rounded-full bg-muted overflow-hidden">
           <div className="h-full bg-brand transition-all" style={{ width: `${fortschritt}%` }} />
         </div>
