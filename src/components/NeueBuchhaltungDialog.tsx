@@ -17,7 +17,6 @@ import { Plus, Upload, FileUp, X, Send, Check, ChevronsUpDown, User, Sparkles, C
 import { cn } from "@/lib/utils";
 import { ACCEPTED_BELEG_ACCEPT, getMimeFromName, validateBelegFile } from "@/lib/file-types";
 import { BelegeingaengeEditor, type BelegeingangEntry } from "@/components/BelegeingaengeEditor";
-import { registerController } from "@/lib/tutorial-bus";
 
 interface Sachbearbeiter {
   id: string;
@@ -42,12 +41,11 @@ interface Props {
   onOpenChange?: (open: boolean) => void;
   hideTrigger?: boolean;
   /** Diese Instanz als Steuerziel für das Tutorial registrieren. */
-  tutorialSteuerung?: boolean;
 }
 
 const MAX_SIZE = 20 * 1024 * 1024;
 
-export function NeueBuchhaltungDialog({ mandanten, onCreated, preselectedMandantId, hideMandantSelect, open: openProp, onOpenChange, hideTrigger, tutorialSteuerung }: Props) {
+export function NeueBuchhaltungDialog({ mandanten, onCreated, preselectedMandantId, hideMandantSelect, open: openProp, onOpenChange, hideTrigger }: Props) {
   const { benutzerId } = useAuth();
   const now = new Date();
   const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -376,34 +374,6 @@ export function NeueBuchhaltungDialog({ mandanten, onCreated, preselectedMandant
     e.preventDefault();
     void doSubmit();
   };
-
-  // Steuerkanal für das Tutorial — bedient denselben echten Dialog wie ein Nutzer.
-  useEffect(() => {
-    if (!tutorialSteuerung) return;
-    registerController("buchhaltung", {
-      oeffnen: () => setOpen(true),
-      schliessen: () => setOpen(false),
-      setzeMandant: (id: string) => setMandantId(id),
-      waehleBearbeiter: (name?: string) => {
-        const treffer = name
-          ? sachbearbeiter.find((s) => s.name.toLowerCase().includes(name.toLowerCase()))
-          : sachbearbeiter[0];
-        const ziel = treffer ?? sachbearbeiter[0];
-        if (!ziel) return false;
-        setBearbeiterId(ziel.id);
-        return true;
-      },
-      setzeMonat: (ym: string) => {
-        setSelectedMonths([ym]);
-        const jahr = parseInt(ym.split("-")[0], 10);
-        if (!Number.isNaN(jahr)) setYearView(jahr);
-      },
-      setzeBelegeingang: (datum: string) => setBelegeingaenge([{ datum, notiz: "" }]),
-      setzeNotiz: (text: string) => setNotiz(text),
-      absenden: doSubmit,
-    });
-    return () => registerController("buchhaltung", null);
-  });
 
   const isValid = !!mandantId && !!bearbeiterId && selectedMonths.length > 0;
 

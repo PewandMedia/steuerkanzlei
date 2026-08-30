@@ -20,7 +20,6 @@ import { usePaginatedList } from "@/hooks/use-paginated-list";
 import { PaginationFooter } from "@/components/PaginationFooter";
 import { usePageSize } from "@/hooks/use-page-size";
 import { fetchAll } from "@/lib/fetch-all";
-import { registerController, type MandantFeld } from "@/lib/tutorial-bus";
 
 const UNTERNEHMENSFORMEN = [
   "Einzelunternehmer",
@@ -274,28 +273,6 @@ export default function Mandanten() {
     setDeleteId(null);
   };
 
-  // Steuerkanal für das Tutorial — bedient denselben echten Dialog wie ein Nutzer.
-  useEffect(() => {
-    const setterFuer: Record<MandantFeld, (v: string) => void> = {
-      vorname: setFormVorname,
-      nachname: setFormNachname,
-      firma: setFormFirma,
-      telefon: setFormTelefon,
-      email: setFormEmail,
-      strasse: setFormStrasse,
-      plz: setFormPlz,
-      ort: setFormOrt,
-      notizen: setFormNotizen,
-    };
-    registerController("mandant", {
-      oeffnen: openCreate,
-      schliessen: () => setDialogOpen(false),
-      setzeFeld: (feld, wert) => setterFuer[feld]?.(wert),
-      setzeUnternehmensform: setFormUnternehmensform,
-      speichern: handleSave,
-    });
-    return () => registerController("mandant", null);
-  });
 
 
 
