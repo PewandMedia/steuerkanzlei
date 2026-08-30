@@ -28,7 +28,7 @@ const gemeinsamAnfang = (name: string, rolle: string): TourStep[] => [
     fallbackSelector: '[data-tour="sidebar-header"]',
     needsSidebar: true,
     title: "Ihr Konto",
-    body: `Sie sind als ${name} (${rolle}) angemeldet. Jede Rolle sieht ein anderes Menü und andere Aktionen. Über „Abmelden" können Sie jederzeit die Rolle wechseln und den Ablauf aus einer anderen Perspektive erleben.`,
+    body: `Sie sind als ${name} (${rolle}) angemeldet. Jede Rolle sieht ein anderes Menü und andere Aktionen. Über „Abmelden“ können Sie jederzeit die Rolle wechseln und den Ablauf aus einer anderen Perspektive erleben.`,
   },
   {
     id: "sidebar-nav",
@@ -42,7 +42,7 @@ const gemeinsamAnfang = (name: string, rolle: string): TourStep[] => [
     route: "/dashboard",
     selector: '[data-tour="kpi"]',
     title: "Überblick in Zahlen",
-    body: "Überfällige Buchhaltungen, bald fällige, laufende, wartende und erledigte. Jede Kachel ist ein Klick-Filter — ein Klick auf „Überfällig" zeigt sofort nur die kritischen Fälle.",
+    body: "Überfällige Buchhaltungen, bald fällige, laufende, wartende und erledigte. Jede Kachel ist ein Klick-Filter — ein Klick auf „Überfällig“ zeigt sofort nur die kritischen Fälle.",
   },
   {
     id: "schnellfilter",
@@ -54,7 +54,7 @@ const gemeinsamAnfang = (name: string, rolle: string): TourStep[] => [
     id: "filter-toolbar",
     selector: '[data-tour="filter-toolbar"]',
     title: "Suchen, filtern, sortieren",
-    body: "Suche nach Mandant, Monat oder Notiz, dazu Filter nach Status, Mitarbeiter und Frist. Die Sortierung steht auf „Priorität": Überfälliges und Dringendes rutscht automatisch nach oben.",
+    body: "Suche nach Mandant, Monat oder Notiz, dazu Filter nach Status, Mitarbeiter und Frist. Die Sortierung steht auf „Priorität“: Überfälliges und Dringendes rutscht automatisch nach oben.",
   },
   {
     id: "frist",
@@ -100,7 +100,7 @@ const sekretariat: TourStep[] = [
     route: "/dashboard",
     selector: '[data-tour="neue-buchhaltung"]',
     title: "Neue Buchhaltung anlegen",
-    body: "Ihr wichtigster Button: Kommen Belege eines Mandanten herein, legen Sie hier die Buchhaltung für den Monat an. Sie erfasst das Belegeingangs-Datum und startet im Status „Eingegangen" — ab da sieht der Sachbearbeiter den Auftrag.",
+    body: "Ihr wichtigster Button: Kommen Belege eines Mandanten herein, legen Sie hier die Buchhaltung für den Monat an. Sie erfasst das Belegeingangs-Datum und startet im Status „Eingegangen“ — ab da sieht der Sachbearbeiter den Auftrag.",
   },
   {
     id: "reihenfolge",
@@ -114,8 +114,8 @@ const sekretariat: TourStep[] = [
     selector: '[data-tour="notiz-warten"]',
     fallbackSelector: '[data-tour="status-zelle"]',
     title: "Was fehlt dem Mandanten",
-    body: "Fehlt etwas, setzt der Sachbearbeiter die Buchhaltung auf „Warten auf Mandant" und schreibt dazu, was genau fehlt. Genau diese Notiz ist Ihre Arbeitsanweisung.",
-    fallbackBody: "Im Status „Warten auf Mandant" hinterlegt der Sachbearbeiter eine Notiz, was genau fehlt. Diese Notiz ist Ihre Arbeitsanweisung.",
+    body: "Fehlt etwas, setzt der Sachbearbeiter die Buchhaltung auf „Warten auf Mandant“ und schreibt dazu, was genau fehlt. Genau diese Notiz ist Ihre Arbeitsanweisung.",
+    fallbackBody: "Im Status „Warten auf Mandant“ hinterlegt der Sachbearbeiter eine Notiz, was genau fehlt. Diese Notiz ist Ihre Arbeitsanweisung.",
   },
   {
     id: "kontakt",
@@ -159,16 +159,16 @@ const sachbearbeiter: TourStep[] = [
     selector: '[data-tour="aktionen"][data-tour-status="Eingegangen"]',
     fallbackSelector: '[data-tour="aktionen"]',
     title: "Annehmen",
-    body: "Sie übernehmen den Auftrag. Der Status wechselt von „Eingegangen" auf „In Bearbeitung" — für alle sichtbar, dass Sie dran sind.",
-    fallbackBody: "In den Aktionen einer Zeile im Status „Eingegangen" übernehmen Sie den Auftrag mit „Annehmen". Der Status wechselt auf „In Bearbeitung".",
+    body: "Sie übernehmen den Auftrag. Der Status wechselt von „Eingegangen“ auf „In Bearbeitung“ — für alle sichtbar, dass Sie dran sind.",
+    fallbackBody: "In den Aktionen einer Zeile im Status „Eingegangen“ übernehmen Sie den Auftrag mit „Annehmen“. Der Status wechselt auf „In Bearbeitung“.",
   },
   {
     id: "unvollstaendig",
     selector: '[data-tour="aktionen"][data-tour-status="In Bearbeitung"]',
     fallbackSelector: '[data-tour="aktionen"]',
     title: "Unvollständig",
-    body: "Fehlen Belege? Hier eintragen, was genau fehlt — die Notiz ist Pflicht. Der Status wird „Warten auf Mandant", und das Sekretariat sieht die Notiz als Auftrag, den Mandanten zu kontaktieren.",
-    fallbackBody: "Fehlen Belege, tragen Sie über „Unvollständig" ein, was genau fehlt — die Notiz ist Pflicht. Das Sekretariat kontaktiert dann den Mandanten.",
+    body: "Fehlen Belege? Hier eintragen, was genau fehlt — die Notiz ist Pflicht. Der Status wird „Warten auf Mandant“, und das Sekretariat sieht die Notiz als Auftrag, den Mandanten zu kontaktieren.",
+    fallbackBody: "Fehlen Belege, tragen Sie über „Unvollständig“ ein, was genau fehlt — die Notiz ist Pflicht. Das Sekretariat kontaktiert dann den Mandanten.",
   },
   {
     id: "weiterarbeiten",
@@ -181,16 +181,16 @@ const sachbearbeiter: TourStep[] = [
     selector: '[data-tour="aktionen"][data-tour-status="In Bearbeitung"]',
     fallbackSelector: '[data-tour="aktionen"]',
     title: "Zur Prüfung senden",
-    body: "Fertig? Damit geht die Buchhaltung an den Chef. Status: „In Prüfung". Der Zeitpunkt wird festgehalten — wer zuerst abgibt, wird zuerst geprüft.",
-    fallbackBody: "Ist die Buchhaltung fertig, senden Sie sie an den Chef. Status: „In Prüfung" — der Zeitpunkt wird festgehalten.",
+    body: "Fertig? Damit geht die Buchhaltung an den Chef. Status: „In Prüfung“. Der Zeitpunkt wird festgehalten — wer zuerst abgibt, wird zuerst geprüft.",
+    fallbackBody: "Ist die Buchhaltung fertig, senden Sie sie an den Chef. Status: „In Prüfung“ — der Zeitpunkt wird festgehalten.",
   },
   {
     id: "zurueckweisung",
     selector: '[data-tour="zurueckweisung"]',
     fallbackSelector: '[data-tour="status-zelle"]',
     title: "Zurückweisungen",
-    body: "Weist der Chef eine Buchhaltung zurück, sehen Sie hier den Grund im Klartext. Der Fall landet wieder bei Ihnen in „In Bearbeitung".",
-    fallbackBody: "Weist der Chef eine Buchhaltung zurück, sehen Sie den Grund im Klartext an der Zeile. Der Fall landet wieder bei Ihnen in „In Bearbeitung".",
+    body: "Weist der Chef eine Buchhaltung zurück, sehen Sie hier den Grund im Klartext. Der Fall landet wieder bei Ihnen in „In Bearbeitung“.",
+    fallbackBody: "Weist der Chef eine Buchhaltung zurück, sehen Sie den Grund im Klartext an der Zeile. Der Fall landet wieder bei Ihnen in „In Bearbeitung“.",
   },
   {
     id: "sidebar-buchhaltungen",
@@ -230,8 +230,8 @@ const chef: TourStep[] = [
     selector: '[data-tour="aktionen"][data-tour-status="In Prüfung"]',
     fallbackSelector: '[data-tour="aktionen"]',
     title: "Freigeben",
-    body: "Alles korrekt? Freigeben setzt den Status auf „Buchhaltung erledigt", hält das Fertigstellungsdatum fest und archiviert den Fall.",
-    fallbackBody: "Bei Buchhaltungen im Status „In Prüfung" setzt „Freigeben" den Status auf „Buchhaltung erledigt", hält das Fertigstellungsdatum fest und archiviert den Fall.",
+    body: "Alles korrekt? Freigeben setzt den Status auf „Buchhaltung erledigt“, hält das Fertigstellungsdatum fest und archiviert den Fall.",
+    fallbackBody: "Bei Buchhaltungen im Status „In Prüfung“ setzt „Freigeben“ den Status auf „Buchhaltung erledigt“, hält das Fertigstellungsdatum fest und archiviert den Fall.",
   },
   {
     id: "zurueckweisen",
@@ -245,7 +245,7 @@ const chef: TourStep[] = [
     id: "chef-aktionen",
     selector: '[data-tour="status-dropdown"]',
     title: "Sonderwege",
-    body: "Als Chef haben Sie zusätzlich Sonderwege: zurück an den Sachbearbeiter, ablehnen und den Mandanten kontaktieren lassen, oder komplett auf „Eingegangen" zurücksetzen.",
+    body: "Als Chef haben Sie zusätzlich Sonderwege: zurück an den Sachbearbeiter, ablehnen und den Mandanten kontaktieren lassen, oder komplett auf „Eingegangen“ zurücksetzen.",
   },
   {
     id: "sidebar-statistiken",
@@ -266,11 +266,11 @@ const chef: TourStep[] = [
 
 const abschluss: Record<BenutzerRolle, string> = {
   Sekretariat:
-    "Das war Ihr Ablauf: Belege annehmen, Buchhaltung anlegen, Mandanten nachfassen. Den Status ändern bewusst nur Sachbearbeiter und Chef — so bleibt klar, wer wofür verantwortlich ist. Tipp: Melden Sie sich als „Sachbearbeiter" an, um den nächsten Schritt zu sehen.",
+    "Das war Ihr Ablauf: Belege annehmen, Buchhaltung anlegen, Mandanten nachfassen. Den Status ändern bewusst nur Sachbearbeiter und Chef — so bleibt klar, wer wofür verantwortlich ist. Tipp: Melden Sie sich als „Sachbearbeiter“ an, um den nächsten Schritt zu sehen.",
   Sachbearbeiter:
-    "Ihr Ablauf: Annehmen, bearbeiten, Fehlendes anfordern, zur Prüfung senden. Melden Sie sich als „Chef / Steuerberater" an, um die Prüfung und Freigabe zu sehen.",
+    "Ihr Ablauf: Annehmen, bearbeiten, Fehlendes anfordern, zur Prüfung senden. Melden Sie sich als „Chef / Steuerberater“ an, um die Prüfung und Freigabe zu sehen.",
   Chef:
-    "Ihr Ablauf: prüfen, freigeben oder zurückweisen, dazu der Blick auf die ganze Kanzlei. Melden Sie sich als „Sekretariat" oder „Sachbearbeiter" an, um den Ablauf von der anderen Seite zu sehen.",
+    "Ihr Ablauf: prüfen, freigeben oder zurückweisen, dazu der Blick auf die ganze Kanzlei. Melden Sie sich als „Sekretariat“ oder „Sachbearbeiter“ an, um den Ablauf von der anderen Seite zu sehen.",
 };
 
 export function getTourSteps(
