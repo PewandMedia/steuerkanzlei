@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { registerController } from "@/lib/tutorial-bus";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -43,6 +44,14 @@ export function StatusTransition({ buchhaltungId, currentStatus, rolle, onStatus
   const [showNoteDialog, setShowNoteDialog] = useState(false);
   const [pendingAction, setPendingAction] = useState<{ status: BuchhaltungStatus; requireNote: boolean; titel?: string } | null>(null);
   const [note, setNote] = useState("");
+
+  // Steuerkanal für das Tutorial: nur aktiv, solange dieser Notiz-Dialog offen ist.
+  useEffect(() => {
+    if (!showNoteDialog) return;
+    registerController("notiz", { setzeNotiz: setNote });
+    return () => registerController("notiz", null);
+  }, [showNoteDialog]);
+
 
   const handleTransition = async (newStatus: BuchhaltungStatus, notiz?: string) => {
     setLoading(true);
@@ -94,6 +103,7 @@ export function StatusTransition({ buchhaltungId, currentStatus, rolle, onStatus
     if (currentStatus === "Eingegangen" && rolle === "Sachbearbeiter") {
       return (
         <Button
+          data-tour="aktion-annehmen"
           size="sm"
           className="bg-green-600 hover:bg-green-700 text-white"
           disabled={loading}
@@ -108,6 +118,7 @@ export function StatusTransition({ buchhaltungId, currentStatus, rolle, onStatus
     if (currentStatus === "In Bearbeitung" && rolle === "Sachbearbeiter") {
       const pruefungBtn = (
         <Button
+          data-tour="aktion-zur-pruefung"
           size="sm"
           className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
           disabled={loading || disablePruefung}
@@ -128,6 +139,7 @@ export function StatusTransition({ buchhaltungId, currentStatus, rolle, onStatus
             </TooltipProvider>
           ) : pruefungBtn}
           <Button
+            data-tour="aktion-unvollstaendig"
             size="sm"
             variant="destructive"
             disabled={loading}
@@ -143,6 +155,7 @@ export function StatusTransition({ buchhaltungId, currentStatus, rolle, onStatus
     if (currentStatus === "Warten auf Mandant" && rolle === "Sachbearbeiter") {
       return (
         <Button
+          data-tour="aktion-weiterarbeiten"
           size="sm"
           className="bg-green-600 hover:bg-green-700 text-white"
           disabled={loading}
@@ -158,6 +171,7 @@ export function StatusTransition({ buchhaltungId, currentStatus, rolle, onStatus
       return (
         <div className="flex gap-1.5">
           <Button
+            data-tour="aktion-freigeben"
             size="sm"
             className="bg-green-600 hover:bg-green-700 text-white"
             disabled={loading}
@@ -167,6 +181,7 @@ export function StatusTransition({ buchhaltungId, currentStatus, rolle, onStatus
             Freigeben
           </Button>
           <Button
+            data-tour="aktion-zurueckweisen"
             size="sm"
             variant="destructive"
             disabled={loading}
@@ -256,7 +271,7 @@ export function StatusTransition({ buchhaltungId, currentStatus, rolle, onStatus
       </div>
 
       <Dialog open={showNoteDialog} onOpenChange={(v) => { if (!loading) { setShowNoteDialog(v); if (!v) { setNote(""); setPendingAction(null); } } }}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" data-tour="notiz-dialog">
           <DialogHeader>
             <DialogTitle>
               {pendingAction?.titel
@@ -286,6 +301,7 @@ export function StatusTransition({ buchhaltungId, currentStatus, rolle, onStatus
               Abbrechen
             </Button>
             <Button
+              data-tour="notiz-bestaetigen"
               onClick={submitWithNote}
               disabled={loading || (pendingAction?.requireNote && !note.trim())}
               variant={pendingAction?.status === "Warten auf Mandant" ? "destructive" : "default"}

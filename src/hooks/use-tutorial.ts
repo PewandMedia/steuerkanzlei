@@ -1,63 +1,113 @@
 import { useCallback, useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-
-const KEY_PREFIX = "tour-gesehen:";
-
-function storageKey(rolle: string | null): string {
-  return `${KEY_PREFIX}${rolle ?? "unbekannt"}`;
-}
-
-function readSeen(rolle: string | null): boolean {
-  try {
-    return window.localStorage.getItem(storageKey(rolle)) === "1";
-  } catch {
-    return true;
-  }
-}
-
-function writeSeen(rolle: string | null): void {
-  try {
-    window.localStorage.setItem(storageKey(rolle), "1");
-  } catch {
-    /* private Fenster: ignorieren */
-  }
-}
+import {
+  leseGesehen,
+  leseLauf,
+  loescheLauf,
+  neuerLauf,
+  type TutorialLauf,
+} from "@/lib/tutorial-lauf";
 
 export interface TutorialState {
-  storyOpen: boolean;
-  seen: boolean;
-  startStory: () => void;
-  endStory: () => void;
+  lauf: TutorialLauf | null;
+  aktiv: boolean;
+  gesehen: boolean;
+  /** Angemeldete Rolle passt zum gespeicherten Laufzustand. */
+  rolleStimmt: boolean;
+  /** Startet bzw. setzt fort. Gibt einen Hinweistext zurück, falls das nicht geht. */
+  starten: () => string | null;
+  schliessen: () => void;
+  verwerfen: () => void;
 }
 
 export function useTutorial(): TutorialState {
   const { rolle, loading } = useAuth();
-  const location = useLocation();
-  const [storyOpen, setStoryOpen] = useState(false);
-  const [seen, setSeen] = useState(true);
+  const [lauf, setLauf] = useState<TutorialLauf | null>(null);
+  const [aktiv, setAktiv] = useState(false);
+  const [gesehen, setGesehen] = useState(true);
 
   useEffect(() => {
-    if (loading || !rolle) return;
-    setSeen(readSeen(rolle));
-  }, [rolle, loading]);
+    setGesehen(leseGesehen());
+  }, []);
 
-  // Auto-Start: einmal pro Rolle beim ersten Dashboard-Besuch
+  // Gespeicherten Lauf laden und gegen die echten Daten prüfen.
+  // Nach dem nächtlichen Demo-Reset existieren die Datensätze nicht mehr —
+  // dann wird der Lauf verworfen.
   useEffect(() => {
-    if (loading || !rolle) return;
-    if (location.pathname !== "/dashboard") return;
-    if (readSeen(rolle)) return;
-    const t = window.setTimeout(() => setStoryOpen(true), 800);
-    return () => window.clearTimeout(t);
-  }, [rolle, loading, location.pathname]);
+    if (loading) return;
+    const gespeichert = leseLauf();
+    if (!gespeichert) {
+      setLauf(null);
+      return;
+    }
+    let abgebrochen = false;
+    (async () => {
+      try {
+        if (gespeichert.buchhaltungId) {
+          const { data } = await supabase
+            .from("buchhaltungen")
+            .select("id")
+            .eq("id", gespeichert.buchhaltungId)
+            .maybeSingle();
+          if (!data) {
+            loescheLauf();
+            if (!abgebrochen) setLauf(null);
+            return;
+          }
+        } else if (gespeichert.mandantId) {
+          const { data } = await supabase
+            .from("mandanten")
+            .select("id")
+            .eq("id", gespeichert.mandantId)
+            .maybeSingle();
+          if (!data) {
+            loescheLauf();
+            if (!abgebrochen) setLauf(null);
+            return;
+          }
+        }
+        if (!abgebrochen) setLauf(gespeichert);
+      } catch {
+        if (!abgebrochen) setLauf(gespeichert);
+      }
+    })();
+    return () => {
+      abgebrochen = true;
+    };
+  }, [loading, rolle]);
 
-  const startStory = useCallback(() => setStoryOpen(true), []);
+  const rolleStimmt = !!lauf && lauf.erwarteteRolle === rolle;
 
-  const endStory = useCallback(() => {
-    setStoryOpen(false);
-    writeSeen(rolle);
-    setSeen(true);
+  const starten = useCallback((): string | null => {
+    const vorhanden = leseLauf();
+    if (vorhanden) {
+      if (vorhanden.erwarteteRolle !== rolle) {
+        return `Dieser Tutorial-Lauf wird als ${vorhanden.erwarteteRolle} fortgesetzt. Bitte melden Sie sich mit dieser Rolle an.`;
+      }
+      setLauf(vorhanden);
+      setAktiv(true);
+      return null;
+    }
+    if (rolle !== "Sekretariat") {
+      return "Das Tutorial beginnt beim Sekretariat. Bitte melden Sie sich als Sekretariat an, um es von vorn zu starten.";
+    }
+    setLauf(neuerLauf());
+    setAktiv(true);
+    return null;
   }, [rolle]);
 
-  return { storyOpen, seen, startStory, endStory };
+  const schliessen = useCallback(() => {
+    setAktiv(false);
+    setGesehen(leseGesehen());
+    setLauf(leseLauf());
+  }, []);
+
+  const verwerfen = useCallback(() => {
+    loescheLauf();
+    setLauf(null);
+    setAktiv(false);
+  }, []);
+
+  return { lauf, aktiv, gesehen, rolleStimmt, starten, schliessen, verwerfen };
 }
