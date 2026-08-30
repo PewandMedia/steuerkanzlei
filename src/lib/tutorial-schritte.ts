@@ -163,7 +163,7 @@ export const SCHRITTE: TutorialSchritt[] = [
     rolle: "Sekretariat",
     route: "/mandanten",
     titel: "Mandant anlegen",
-    text: "Mit „Anlegen" wird der Mandant wirklich gespeichert. Ab jetzt hängen alle Buchhaltungen an diesem Stammdatensatz.",
+    text: "Mit „Anlegen“ wird der Mandant wirklich gespeichert. Ab jetzt hängen alle Buchhaltungen an diesem Stammdatensatz.",
     ziel: () => '[data-tour="mandant-speichern"]',
     aktion: async (k) => {
       const c = await warteAufController("mandant");
@@ -237,7 +237,7 @@ export const SCHRITTE: TutorialSchritt[] = [
     rolle: "Sekretariat",
     route: "/dashboard",
     titel: "Status: Eingegangen",
-    text: "Das ist der eben angelegte Vorgang — echte Daten in der echten Liste. Der Status „Eingegangen" bedeutet: liegt beim Sachbearbeiter, noch nicht angenommen.",
+    text: "Das ist der eben angelegte Vorgang — echte Daten in der echten Liste. Der Status „Eingegangen“ bedeutet: liegt beim Sachbearbeiter, noch nicht angenommen.",
     ziel: zeile,
     lesezeit: 6000,
     aktion: fokussiereZeile,
@@ -268,7 +268,7 @@ export const SCHRITTE: TutorialSchritt[] = [
     rolle: "Sachbearbeiter",
     route: "/dashboard",
     titel: "Auftrag annehmen",
-    text: "Mit „Annehmen" übernimmt er den Vorgang. Für alle in der Kanzlei ist ab jetzt sichtbar, dass daran gearbeitet wird.",
+    text: "Mit „Annehmen“ übernimmt er den Vorgang. Für alle in der Kanzlei ist ab jetzt sichtbar, dass daran gearbeitet wird.",
     ziel: (l) => aktion(l, "annehmen"),
     aktion: async (k) => {
       await k.klicke(aktion(k.lauf, "annehmen")!);
@@ -291,7 +291,7 @@ export const SCHRITTE: TutorialSchritt[] = [
     rolle: "Sachbearbeiter",
     route: "/dashboard",
     titel: "Unterlagen unvollständig",
-    text: "„Unvollständig" öffnet den echten Notiz-Dialog. Die Notiz ist Pflicht — so weiß jeder sofort, woran es hängt.",
+    text: "„Unvollständig“ öffnet den echten Notiz-Dialog. Die Notiz ist Pflicht — so weiß jeder sofort, woran es hängt.",
     ziel: (l) => aktion(l, "unvollstaendig"),
     aktion: async (k) => {
       await k.klicke(aktion(k.lauf, "unvollstaendig")!);
@@ -321,7 +321,7 @@ export const SCHRITTE: TutorialSchritt[] = [
     rolle: "Sachbearbeiter",
     route: "/dashboard",
     titel: "Warten auf Mandant",
-    text: "Der Status steht auf „Warten auf Mandant", die Notiz hängt sichtbar an der Zeile. Das Sekretariat sieht den Vorgang und kann den Mandanten kontaktieren.",
+    text: "Der Status steht auf „Warten auf Mandant“, die Notiz hängt sichtbar an der Zeile. Das Sekretariat sieht den Vorgang und kann den Mandanten kontaktieren.",
     ziel: zeile,
     lesezeit: 6000,
     aktion: fokussiereZeile,
@@ -332,7 +332,7 @@ export const SCHRITTE: TutorialSchritt[] = [
     rolle: "Sachbearbeiter",
     route: "/dashboard",
     titel: "Unterlagen sind da",
-    text: "Die fehlenden Belege sind eingetroffen — mit „Weiterarbeiten" geht der Vorgang zurück in Bearbeitung.",
+    text: "Die fehlenden Belege sind eingetroffen — mit „Weiterarbeiten“ geht der Vorgang zurück in Bearbeitung.",
     ziel: (l) => aktion(l, "weiterarbeiten"),
     aktion: async (k) => {
       await k.klicke(aktion(k.lauf, "weiterarbeiten")!);
@@ -379,7 +379,7 @@ export const SCHRITTE: TutorialSchritt[] = [
     rolle: "Chef",
     route: "/dashboard",
     titel: "Zurückweisen",
-    text: "„Zurückweisen" öffnet den echten Dialog für die Begründung.",
+    text: "„Zurückweisen“ öffnet den echten Dialog für die Begründung.",
     ziel: (l) => aktion(l, "zurueckweisen"),
     aktion: async (k) => {
       await k.klicke(aktion(k.lauf, "zurueckweisen")!);
@@ -463,7 +463,7 @@ export const SCHRITTE: TutorialSchritt[] = [
     rolle: "Chef",
     route: "/dashboard",
     titel: "Freigeben",
-    text: "Mit „Freigeben" ist der Vorgang abgeschlossen. Das Fertigstellungsdatum wird festgehalten.",
+    text: "Mit „Freigeben“ ist der Vorgang abgeschlossen. Das Fertigstellungsdatum wird festgehalten.",
     ziel: (l) => aktion(l, "freigeben"),
     aktion: async (k) => {
       await k.klicke(aktion(k.lauf, "freigeben")!);
@@ -476,7 +476,7 @@ export const SCHRITTE: TutorialSchritt[] = [
     rolle: "Chef",
     route: "/dashboard",
     titel: "Buchhaltung erledigt",
-    text: "Der Vorgang ist erledigt und wandert ins Archiv unter „Erstellte Buchhaltungen". Jeder Schritt ist dokumentiert.",
+    text: "Der Vorgang ist erledigt und wandert ins Archiv unter „Erstellte Buchhaltungen“. Jeder Schritt ist dokumentiert.",
     ziel: zeile,
     lesezeit: 6000,
     aktion: fokussiereZeile,
