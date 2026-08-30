@@ -17,6 +17,7 @@ import { Plus, Upload, FileUp, X, Send, Check, ChevronsUpDown, User, Sparkles, C
 import { cn } from "@/lib/utils";
 import { ACCEPTED_BELEG_ACCEPT, getMimeFromName, validateBelegFile } from "@/lib/file-types";
 import { BelegeingaengeEditor, type BelegeingangEntry } from "@/components/BelegeingaengeEditor";
+import { registerController } from "@/lib/tutorial-bus";
 
 interface Sachbearbeiter {
   id: string;
@@ -40,11 +41,13 @@ interface Props {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   hideTrigger?: boolean;
+  /** Diese Instanz als Steuerziel für das Tutorial registrieren. */
+  tutorialSteuerung?: boolean;
 }
 
 const MAX_SIZE = 20 * 1024 * 1024;
 
-export function NeueBuchhaltungDialog({ mandanten, onCreated, preselectedMandantId, hideMandantSelect, open: openProp, onOpenChange, hideTrigger }: Props) {
+export function NeueBuchhaltungDialog({ mandanten, onCreated, preselectedMandantId, hideMandantSelect, open: openProp, onOpenChange, hideTrigger, tutorialSteuerung }: Props) {
   const { benutzerId } = useAuth();
   const now = new Date();
   const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -240,14 +243,13 @@ export function NeueBuchhaltungDialog({ mandanten, onCreated, preselectedMandant
     setNotiz("");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const doSubmit = async (): Promise<string[]> => {
     const targetMandantId = mandantId;
 
-    if (!benutzerId || !targetMandantId || monateDb.length === 0) return;
+    if (!benutzerId || !targetMandantId || monateDb.length === 0) return [];
     if (!bearbeiterId) {
       toast({ title: "Sachbearbeiter fehlt", description: "Bitte einen Sachbearbeiter zuweisen.", variant: "destructive" });
-      return;
+      return [];
     }
     setUploading(true);
     setProgress(5);
@@ -367,9 +369,44 @@ export function NeueBuchhaltungDialog({ mandanten, onCreated, preselectedMandant
     setOpen(false);
     setUploading(false);
     onCreated();
+    return createdIds;
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    void doSubmit();
+  };
+
+  // Steuerkanal für das Tutorial — bedient denselben echten Dialog wie ein Nutzer.
+  useEffect(() => {
+    if (!tutorialSteuerung) return;
+    registerController("buchhaltung", {
+      oeffnen: () => setOpen(true),
+      schliessen: () => setOpen(false),
+      setzeMandant: (id: string) => setMandantId(id),
+      waehleBearbeiter: (name?: string) => {
+        const treffer = name
+          ? sachbearbeiter.find((s) => s.name.toLowerCase().includes(name.toLowerCase()))
+          : sachbearbeiter[0];
+        const ziel = treffer ?? sachbearbeiter[0];
+        if (!ziel) return false;
+        setBearbeiterId(ziel.id);
+        return true;
+      },
+      setzeMonat: (ym: string) => {
+        setSelectedMonths([ym]);
+        const jahr = parseInt(ym.split("-")[0], 10);
+        if (!Number.isNaN(jahr)) setYearView(jahr);
+      },
+      setzeBelegeingang: (datum: string) => setBelegeingaenge([{ datum, notiz: "" }]),
+      setzeNotiz: (text: string) => setNotiz(text),
+      absenden: doSubmit,
+    });
+    return () => registerController("buchhaltung", null);
+  });
+
   const isValid = !!mandantId && !!bearbeiterId && selectedMonths.length > 0;
+
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!uploading) { setOpen(v); if (!v) resetForm(); } }}>
@@ -380,7 +417,7 @@ export function NeueBuchhaltungDialog({ mandanten, onCreated, preselectedMandant
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" data-tour="buchhaltung-dialog">
         <DialogHeader>
           <DialogTitle className="text-lg">Neue Buchhaltung einreichen</DialogTitle>
           <p className="text-sm text-muted-foreground">Belege scannen und an den Sachbearbeiter weiterleiten</p>
@@ -712,7 +749,7 @@ export function NeueBuchhaltungDialog({ mandanten, onCreated, preselectedMandant
 
           {uploading && <Progress value={progress} className="h-2" />}
 
-          <Button type="submit" className="w-full" disabled={uploading || !isValid}>
+          <Button data-tour="buchhaltung-absenden" type="submit" className="w-full" disabled={uploading || !isValid}>
             <Send className="h-4 w-4 mr-2" />
             {uploading
               ? "Wird weitergeleitet…"
