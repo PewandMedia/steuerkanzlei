@@ -450,6 +450,10 @@ export function TutorialOverlay({ lauf, onBeenden }: Props) {
         data-tutorial-karte
         className="fixed pointer-events-auto rounded-xl border border-border bg-card p-4 shadow-2xl max-[900px]:!left-3 max-[900px]:!right-3 max-[900px]:!top-auto max-[900px]:!bottom-3 max-[900px]:!w-auto max-[900px]:!transform-none"
         style={kartenStil}
+        onPointerDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+        onFocusCapture={(e) => e.stopPropagation()}
         role="region"
         aria-label={schritt.titel}
       >
