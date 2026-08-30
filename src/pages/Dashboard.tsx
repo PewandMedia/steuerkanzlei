@@ -393,17 +393,19 @@ export default function Dashboard() {
           <p className="text-sm text-muted-foreground mt-1">Alle offenen Buchhaltungen, Fristen und Prioritäten auf einen Blick.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing} className="h-9">
+          <Button data-tour="aktualisieren" variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing} className="h-9">
             <RefreshCw className={`h-4 w-4 mr-1.5 ${refreshing ? "animate-spin" : ""}`} />
             Aktualisieren
           </Button>
-          <NeueBuchhaltungDialog mandanten={mandanten} onCreated={fetchData} />
+          <span data-tour="neue-buchhaltung" className="inline-flex">
+            <NeueBuchhaltungDialog mandanten={mandanten} onCreated={fetchData} />
+          </span>
         </div>
       </div>
 
 
       {/* Stats — clickable */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+      <div data-tour="kpi" className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
         {stats.map((s) => (
           <Card
             key={s.label}
@@ -424,7 +426,7 @@ export default function Dashboard() {
       </div>
 
       {/* Quick filter buttons */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div data-tour="schnellfilter" className="flex flex-wrap items-center gap-2">
         <Button
           variant={fristFilter === "ueberfaellig" ? "default" : "outline"}
           size="sm"
@@ -450,6 +452,7 @@ export default function Dashboard() {
           <Briefcase className="h-4 w-4 mr-1.5" /> In Bearbeitung
         </Button>
         <Button
+          data-tour="schnellfilter-pruefung"
           variant={statusFilter === "In Prüfung" ? "default" : "outline"}
           size="sm"
           onClick={() => setStatusFilter(statusFilter === "In Prüfung" ? "all" : "In Prüfung")}
@@ -465,7 +468,7 @@ export default function Dashboard() {
       </div>
 
       {/* Filter-Toolbar — kompakt, max. 2 Zeilen auf Laptop */}
-      <div className="card-elevated p-3 flex flex-wrap items-center gap-2">
+      <div data-tour="filter-toolbar" className="card-elevated p-3 flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[220px]">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -517,7 +520,7 @@ export default function Dashboard() {
             <SelectItem value="erstellt">Erstellt (neu)</SelectItem>
           </SelectContent>
         </Select>
-        <div className="flex items-center gap-2 h-9 px-2 rounded-md border bg-card">
+        <div data-tour="nur-meine" className="flex items-center gap-2 h-9 px-2 rounded-md border bg-card">
           <Switch id="nur-meine" checked={nurMeine} onCheckedChange={setNurMeine} />
           <Label htmlFor="nur-meine" className="text-xs cursor-pointer whitespace-nowrap">Nur meine</Label>
         </div>
@@ -534,7 +537,7 @@ export default function Dashboard() {
 
       {/* Table */}
       {belegAnzahl > 1 && belegRangFirst && (
-        <div className="flex items-start gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+        <div data-tour="reihenfolge-hinweis" className="flex items-start gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
           <Clock className="h-4 w-4 mt-0.5 shrink-0" />
           <div className="min-w-0">
             <span className="font-medium">Reihenfolge-Hinweis: </span>
@@ -600,7 +603,7 @@ export default function Dashboard() {
                     <TableCell className="font-medium min-w-[220px] align-top">
                       <div className="flex flex-wrap items-center gap-1.5">
                         {istNaechster && (
-                          <Badge className="gap-1 bg-primary text-primary-foreground hover:bg-primary/90">
+                          <Badge data-tour="badge-naechstes" className="gap-1 bg-primary text-primary-foreground hover:bg-primary/90">
                             <Star className="h-3 w-3" /> Als Nächstes
                           </Badge>
                         )}
@@ -608,7 +611,7 @@ export default function Dashboard() {
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Badge className="gap-1 bg-amber-500 text-white hover:bg-amber-500/90 cursor-help">
+                                <Badge data-tour="badge-zuerst-abgegeben" className="gap-1 bg-amber-500 text-white hover:bg-amber-500/90 cursor-help">
                                   <Flame className="h-3 w-3" /> Zuerst abgegeben — bitte zuerst prüfen
                                 </Badge>
                               </TooltipTrigger>
@@ -630,7 +633,7 @@ export default function Dashboard() {
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Badge className="gap-1 bg-emerald-600 text-white hover:bg-emerald-600/90 cursor-help">
+                                <Badge data-tour="badge-zuerst-dran" className="gap-1 bg-emerald-600 text-white hover:bg-emerald-600/90 cursor-help">
                                   <Clock className="h-3 w-3" /> Zuerst dran
                                 </Badge>
                               </TooltipTrigger>
@@ -693,7 +696,7 @@ export default function Dashboard() {
                       </div>
 
                       {b.zurueckgewiesen_am && b.status === "In Bearbeitung" && b.notizen && (
-                        <div className="mt-2 block w-full rounded-md border border-destructive/40 bg-destructive/5 px-2 py-1.5">
+                        <div data-tour="zurueckweisung" className="mt-2 block w-full rounded-md border border-destructive/40 bg-destructive/5 px-2 py-1.5">
                           <p className="text-[10px] font-semibold uppercase tracking-wide text-destructive flex items-center gap-1">
                             <AlertOctagon className="h-3 w-3" /> Grund der Zurückweisung
                           </p>
@@ -701,7 +704,7 @@ export default function Dashboard() {
                         </div>
                       )}
                       {b.status === "Warten auf Mandant" && b.notizen && (
-                        <p className="text-xs text-destructive mt-1 line-clamp-2 font-normal" title={b.notizen}>
+                        <p data-tour="notiz-warten" className="text-xs text-destructive mt-1 line-clamp-2 font-normal" title={b.notizen}>
                           📝 {b.notizen}
                         </p>
                       )}
@@ -736,7 +739,7 @@ export default function Dashboard() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-col gap-1">
+                      <div data-tour="status-zelle" className="flex flex-col gap-1">
                         <div className="flex items-center gap-1">
                           <StatusBadge status={b.status} />
                           {b.notizen && (
@@ -773,7 +776,7 @@ export default function Dashboard() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell data-tour="frist">
                       <DeadlineIndicator
                         faelligAm={b.faellig_am}
                         status={b.status}
@@ -782,7 +785,7 @@ export default function Dashboard() {
                       />
                     </TableCell>
                     <TableCell>
-                      <div className="space-y-1 min-w-[170px]">
+                      <div data-tour="belege" className="space-y-1 min-w-[170px]">
                         <BelegeVollansicht
                           buchhaltungId={b.id}
                           mandantId={b.mandant?.id}
@@ -838,11 +841,13 @@ export default function Dashboard() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-wrap items-center gap-1 min-w-[200px]">
+                      <div data-tour="aktionen" data-tour-status={b.status} className="flex flex-wrap items-center gap-1 min-w-[200px]">
+                        <span data-tour="whatsapp" className="inline-flex">
                         <WhatsAppButton
                           telefon={b.mandant?.telefon}
                           mandantName={b.mandant?.firma || b.mandant?.name}
                         />
+                        </span>
                         {rolle && (
                           <StatusTransitionWithFortschritt
                             buchhaltungId={b.id}
@@ -854,7 +859,7 @@ export default function Dashboard() {
 
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Button data-tour="row-menu" variant="ghost" size="icon" className="h-8 w-8">
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
