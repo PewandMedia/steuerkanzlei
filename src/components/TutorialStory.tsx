@@ -44,6 +44,7 @@ export function TutorialStory({ onClose }: Props) {
   const [pressing, setPressing] = useState<string | null>(null);
   const [dialog, setDialog] = useState<DialogState | null>(null);
   const [committed, setCommitted] = useState(-1);
+  const [run, setRun] = useState(0);
 
   const tokenRef = useRef(0);
   const playingRef = useRef(playing);
@@ -158,7 +159,7 @@ export function TutorialStory({ onClose }: Props) {
       tokenRef.current += 1;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index]);
+  }, [index, run]);
 
   // Body-Scroll sperren
   useEffect(() => {
@@ -183,9 +184,7 @@ export function TutorialStory({ onClose }: Props) {
     setCommitted(-1);
     setPlaying(true);
     setIndex(0);
-    tokenRef.current += 1;
-    // erzwingt Neuauslösung, falls bereits bei 0
-    setIndex(0);
+    setRun((r) => r + 1);
   }, []);
 
   const schliessen = useCallback(() => {
