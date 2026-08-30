@@ -101,7 +101,7 @@ export function AppSidebar() {
         )}
       </SidebarHeader>
 
-      <SidebarContent className="px-2">
+      <SidebarContent className="px-2" data-tour="sidebar">
         {renderGroup("Workflow", workflowItems)}
         {renderGroup("Auswertung", auswertungItems)}
         {renderGroup("Verwaltung", adminItems)}
