@@ -190,7 +190,7 @@ export function StatusTransition({ buchhaltungId, currentStatus, rolle, onStatus
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button size="sm" variant="ghost" disabled={loading} className="h-8 px-2 text-muted-foreground">
+          <Button data-tour="status-dropdown" size="sm" variant="ghost" disabled={loading} className="h-8 px-2 text-muted-foreground">
             Status <ChevronDown className="h-3.5 w-3.5 ml-1" />
           </Button>
         </DropdownMenuTrigger>
