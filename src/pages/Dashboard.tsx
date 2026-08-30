@@ -40,6 +40,7 @@ import { fetchAll } from "@/lib/fetch-all";
 import { getCached, setCached, invalidateCache } from "@/lib/simple-cache";
 import { RefreshCw } from "lucide-react";
 import { useFocusRow } from "@/hooks/use-focus-row";
+import { registerController } from "@/lib/tutorial-bus";
 
 type BuchhaltungStatus = Database["public"]["Enums"]["buchhaltung_status"];
 
@@ -89,6 +90,8 @@ export default function Dashboard() {
   const [kontaktBuchhaltung, setKontaktBuchhaltung] = useState<BuchhaltungRow | null>(null);
   // expandedId entfernt — keine Anzeigen-Spalte mehr
   const [belegeingaengeDialog, setBelegeingaengeDialog] = useState<BuchhaltungRow | null>(null);
+  // Nur während des Tutorials gesetzt: blendet gezielt den erklärten Vorgang ein.
+  const [tutorialFokusId, setTutorialFokusId] = useState<string | null>(null);
   // ocr batch button removed
 
   // Sachbearbeiter standardmäßig nur eigene anzeigen
@@ -182,6 +185,20 @@ export default function Dashboard() {
     setRefreshing(false);
   };
 
+  // Steuerkanal für das Tutorial — nur Anzeige/Aktualisierung, keine Datenänderung.
+  useEffect(() => {
+    registerController("dashboard", {
+      fokus: (id) => setTutorialFokusId(id),
+      aktualisieren: async () => {
+        invalidateCache("dashboard:");
+        await Promise.all([fetchData(), fetchMandanten()]);
+      },
+    });
+    return () => registerController("dashboard", null);
+  }, []);
+
+
+
 
 
 
@@ -194,6 +211,8 @@ export default function Dashboard() {
   const filtered = useMemo(() => {
     const sucheLower = suche.trim().toLowerCase();
     const result = buchhaltungen.filter((b) => {
+      // Tutorial-Fokus: nur der erklärte Vorgang, unabhängig von den Filtern.
+      if (tutorialFokusId) return b.id === tutorialFokusId;
       if (statusFilter !== "all" && b.status !== statusFilter) return false;
       if (!zeigeErledigte && statusFilter === "all" && b.status === "Buchhaltung erledigt") return false;
       if (bearbeiterFilter !== "all" && b.bearbeiter?.name !== bearbeiterFilter) return false;
@@ -254,10 +273,10 @@ export default function Dashboard() {
       }
     });
 
-  }, [buchhaltungen, statusFilter, bearbeiterFilter, monatFilter, fristFilter, suche, sortierung, nurMeine, benutzerId, zeigeErledigte]);
+  }, [buchhaltungen, statusFilter, bearbeiterFilter, monatFilter, fristFilter, suche, sortierung, nurMeine, benutzerId, zeigeErledigte, tutorialFokusId]);
 
   // Pagination — initial 10, weitere per Button / Auto-Load on Scroll
-  const paginationKey = `${statusFilter}|${bearbeiterFilter}|${monatFilter}|${fristFilter}|${suche}|${sortierung}|${nurMeine}|${zeigeErledigte}`;
+  const paginationKey = `${statusFilter}|${bearbeiterFilter}|${monatFilter}|${fristFilter}|${suche}|${sortierung}|${nurMeine}|${zeigeErledigte}|${tutorialFokusId ?? ""}`;
   const [pageSize, setPageSize] = usePageSize("pageSize:dashboard");
   const { visible: visibleRows, page, totalPages, goToPage, total: totalRows, shown: shownRows } =
     usePaginatedList(filtered, pageSize, paginationKey);
@@ -397,15 +416,15 @@ export default function Dashboard() {
             <RefreshCw className={`h-4 w-4 mr-1.5 ${refreshing ? "animate-spin" : ""}`} />
             Aktualisieren
           </Button>
-          <span className="inline-flex">
-            <NeueBuchhaltungDialog mandanten={mandanten} onCreated={fetchData} />
+          <span className="inline-flex" data-tour="neue-buchhaltung">
+            <NeueBuchhaltungDialog mandanten={mandanten} onCreated={fetchData} tutorialSteuerung />
           </span>
         </div>
       </div>
 
 
       {/* Stats — clickable */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3" data-tour="kpi">
         {stats.map((s) => (
           <Card
             key={s.label}
@@ -426,7 +445,7 @@ export default function Dashboard() {
       </div>
 
       {/* Quick filter buttons */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2" data-tour="schnellfilter">
         <Button
           variant={fristFilter === "ueberfaellig" ? "default" : "outline"}
           size="sm"
@@ -467,7 +486,7 @@ export default function Dashboard() {
       </div>
 
       {/* Filter-Toolbar — kompakt, max. 2 Zeilen auf Laptop */}
-      <div className="card-elevated p-3 flex flex-wrap items-center gap-2">
+      <div className="card-elevated p-3 flex flex-wrap items-center gap-2" data-tour="filter">
         <div className="relative flex-1 min-w-[220px]">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -597,6 +616,7 @@ export default function Dashboard() {
                   <Fragment key={b.id}>
                   <TableRow
                     ref={setRef(b.id) as any}
+                    data-buchhaltung-id={b.id}
                     className={[rowCls, highlightId === b.id ? "focus-row-highlight" : ""].filter(Boolean).join(" ")}
                   >
                     <TableCell className="font-medium min-w-[220px] align-top">
