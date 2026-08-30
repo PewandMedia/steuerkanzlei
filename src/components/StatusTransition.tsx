@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { registerController } from "@/lib/tutorial-bus";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -44,13 +43,6 @@ export function StatusTransition({ buchhaltungId, currentStatus, rolle, onStatus
   const [showNoteDialog, setShowNoteDialog] = useState(false);
   const [pendingAction, setPendingAction] = useState<{ status: BuchhaltungStatus; requireNote: boolean; titel?: string } | null>(null);
   const [note, setNote] = useState("");
-
-  // Steuerkanal für das Tutorial: nur aktiv, solange dieser Notiz-Dialog offen ist.
-  useEffect(() => {
-    if (!showNoteDialog) return;
-    registerController("notiz", { setzeNotiz: setNote });
-    return () => registerController("notiz", null);
-  }, [showNoteDialog]);
 
 
   const handleTransition = async (newStatus: BuchhaltungStatus, notiz?: string) => {

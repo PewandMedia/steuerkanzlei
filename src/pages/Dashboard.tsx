@@ -417,7 +417,7 @@ export default function Dashboard() {
             Aktualisieren
           </Button>
           <span className="inline-flex" data-tour="neue-buchhaltung">
-            <NeueBuchhaltungDialog mandanten={mandanten} onCreated={fetchData} tutorialSteuerung />
+            <NeueBuchhaltungDialog mandanten={mandanten} onCreated={fetchData} />
           </span>
         </div>
       </div>
