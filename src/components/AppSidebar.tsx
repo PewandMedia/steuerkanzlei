@@ -54,7 +54,7 @@ export function AppSidebar() {
 
   const renderGroup = (label: string, groupItems: typeof workflowItems) =>
     groupItems.length === 0 ? null : (
-      <SidebarGroup data-tour={label === "Workflow" ? "sidebar-nav" : undefined}>
+      <SidebarGroup>
         <SidebarGroupLabel className="section-label px-3 pt-4 pb-2">{label}</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu className="gap-0.5">
@@ -65,7 +65,7 @@ export function AppSidebar() {
                   isActive={location.pathname === item.url}
                   className="relative h-11 md:h-9 rounded-md text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-semibold data-[active=true]:before:absolute data-[active=true]:before:left-0 data-[active=true]:before:top-1.5 data-[active=true]:before:bottom-1.5 data-[active=true]:before:w-[3px] data-[active=true]:before:rounded-r-full data-[active=true]:before:bg-brand"
                 >
-                  <NavLink to={item.url} end onClick={closeMobile} data-tour={`nav-${item.url}`}>
+                  <NavLink to={item.url} end onClick={closeMobile}>
                     <item.icon className="mr-2 h-4 w-4 shrink-0" />
                     {!collapsed && <span className="flex-1 truncate">{item.title}</span>}
                   </NavLink>
@@ -79,7 +79,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
-      <SidebarHeader data-tour="sidebar-header" className="border-b border-sidebar-border px-3 py-4">
+      <SidebarHeader className="border-b border-sidebar-border px-3 py-4">
         {!collapsed ? (
           <div className="flex items-center gap-2.5">
             <BrandLogo className="h-9 w-9 border border-border" />
@@ -111,12 +111,11 @@ export function AppSidebar() {
         {collapsed ? (
           <div className="flex flex-col items-center gap-2">
             <UserAvatar seed={user?.id ?? benutzerName} name={benutzerName} email={user?.email} size="md" />
-            <span data-tour="glocke" className="inline-flex"><NotificationBell /></span>
+            <span className="inline-flex"><NotificationBell /></span>
             <Button
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
-              data-tour="theme"
               title={isDark ? "Helles Design" : "Dunkles Design"}
               className="text-muted-foreground hover:text-foreground"
             >
@@ -134,7 +133,7 @@ export function AppSidebar() {
           </div>
         ) : (
           <div className="space-y-2">
-            <div data-tour="sidebar-user" className="flex items-center gap-3 rounded-lg border border-sidebar-border bg-card p-2.5">
+            <div className="flex items-center gap-3 rounded-lg border border-sidebar-border bg-card p-2.5">
               <UserAvatar
                 seed={user?.id ?? benutzerName}
                 name={benutzerName}
@@ -155,7 +154,6 @@ export function AppSidebar() {
                 aria-checked={isDark}
                 aria-label={isDark ? "Zu hellem Design wechseln" : "Zu dunklem Design wechseln"}
                 onClick={toggleTheme}
-                data-tour="theme"
                 className="relative shrink-0 h-7 w-12 rounded-full border border-sidebar-border bg-muted/60 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
               >
                 <span className="pointer-events-none absolute inset-0 flex items-center justify-between px-1.5 text-muted-foreground">
@@ -167,7 +165,7 @@ export function AppSidebar() {
                 />
               </button>
             </div>
-            <span data-tour="glocke" className="block"><NotificationBell variant="full" /></span>
+            <span className="block"><NotificationBell variant="full" /></span>
             <Button
               variant="outline"
               onClick={handleSignOut}

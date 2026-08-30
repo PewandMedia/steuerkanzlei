@@ -4,22 +4,18 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { ZurueckweisungAlert } from "@/components/ZurueckweisungAlert";
 import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
-import { TutorialDialog } from "@/components/TutorialDialog";
-import { TutorialTour } from "@/components/TutorialTour";
+import { TutorialStory } from "@/components/TutorialStory";
 import { useTutorial } from "@/hooks/use-tutorial";
-import { useAuth } from "@/hooks/use-auth";
-import { getTourSteps } from "@/lib/tutorial-steps";
 
 function TutorialControls() {
-  const { rolle, benutzerName } = useAuth();
-  const { introOpen, tourRunning, seen, openIntro, closeIntro, startTour, endTour } = useTutorial();
+  const { storyOpen, seen, startStory, endStory } = useTutorial();
 
   return (
     <>
       <Button
         variant="outline"
         size="sm"
-        onClick={openIntro}
+        onClick={startStory}
         aria-label="Tutorial starten"
         className="relative ml-auto h-9 rounded-full"
       >
@@ -33,18 +29,7 @@ function TutorialControls() {
         )}
       </Button>
 
-      <TutorialDialog
-        open={introOpen}
-        onOpenChange={(o) => {
-          if (!o) closeIntro();
-        }}
-        rolle={rolle}
-        onStartTour={startTour}
-      />
-
-      {tourRunning && (
-        <TutorialTour steps={getTourSteps(rolle, benutzerName)} onFinish={endTour} />
-      )}
+      {storyOpen && <TutorialStory onClose={endStory} />}
     </>
   );
 }

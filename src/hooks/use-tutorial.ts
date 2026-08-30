@@ -25,23 +25,18 @@ function writeSeen(rolle: string | null): void {
 }
 
 export interface TutorialState {
-  introOpen: boolean;
-  tourRunning: boolean;
+  storyOpen: boolean;
   seen: boolean;
-  openIntro: () => void;
-  closeIntro: () => void;
-  startTour: () => void;
-  endTour: () => void;
+  startStory: () => void;
+  endStory: () => void;
 }
 
 export function useTutorial(): TutorialState {
   const { rolle, loading } = useAuth();
   const location = useLocation();
-  const [introOpen, setIntroOpen] = useState(false);
-  const [tourRunning, setTourRunning] = useState(false);
+  const [storyOpen, setStoryOpen] = useState(false);
   const [seen, setSeen] = useState(true);
 
-  // Gesehen-Status pro Rolle laden
   useEffect(() => {
     if (loading || !rolle) return;
     setSeen(readSeen(rolle));
@@ -52,31 +47,17 @@ export function useTutorial(): TutorialState {
     if (loading || !rolle) return;
     if (location.pathname !== "/dashboard") return;
     if (readSeen(rolle)) return;
-    const t = window.setTimeout(() => setIntroOpen(true), 800);
+    const t = window.setTimeout(() => setStoryOpen(true), 800);
     return () => window.clearTimeout(t);
   }, [rolle, loading, location.pathname]);
 
-  const markSeen = useCallback(() => {
+  const startStory = useCallback(() => setStoryOpen(true), []);
+
+  const endStory = useCallback(() => {
+    setStoryOpen(false);
     writeSeen(rolle);
     setSeen(true);
   }, [rolle]);
 
-  const openIntro = useCallback(() => setIntroOpen(true), []);
-
-  const closeIntro = useCallback(() => {
-    setIntroOpen(false);
-    markSeen();
-  }, [markSeen]);
-
-  const startTour = useCallback(() => {
-    setIntroOpen(false);
-    setTourRunning(true);
-  }, []);
-
-  const endTour = useCallback(() => {
-    setTourRunning(false);
-    markSeen();
-  }, [markSeen]);
-
-  return { introOpen, tourRunning, seen, openIntro, closeIntro, startTour, endTour };
+  return { storyOpen, seen, startStory, endStory };
 }
