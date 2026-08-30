@@ -20,6 +20,7 @@ import { usePaginatedList } from "@/hooks/use-paginated-list";
 import { PaginationFooter } from "@/components/PaginationFooter";
 import { usePageSize } from "@/hooks/use-page-size";
 import { fetchAll } from "@/lib/fetch-all";
+import { registerController, type MandantFeld } from "@/lib/tutorial-bus";
 
 const UNTERNEHMENSFORMEN = [
   "Einzelunternehmer",
@@ -179,19 +180,19 @@ export default function Mandanten() {
     setDialogOpen(true);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<string | null> => {
     if (!formVorname.trim() && !formNachname.trim() && !formFirma.trim()) {
       toast({ title: "Fehler", description: "Bitte mindestens Vor-/Nachname oder Firma angeben.", variant: "destructive" });
-      return;
+      return null;
     }
     const finaleNummer = `M-${formNummerZahl.trim().padStart(4, "0")}`;
     if (!formNummerZahl.trim()) {
       toast({ title: "Fehler", description: "Bitte eine Mandantennummer angeben.", variant: "destructive" });
-      return;
+      return null;
     }
     if (mandanten.some((m) => m.mandanten_nummer === finaleNummer && m.id !== editingMandant?.id)) {
       toast({ title: "Fehler", description: "Diese Mandantennummer ist bereits vergeben.", variant: "destructive" });
-      return;
+      return null;
     }
     setLoading(true);
     const displayName = [formVorname.trim(), formNachname.trim()].filter(Boolean).join(" ") || formFirma.trim();
@@ -222,6 +223,7 @@ export default function Mandanten() {
       dauerfristverlaengerung: formDfv,
     };
 
+    let gespeicherteId: string | null = null;
     if (editingMandant) {
       const { error } = await supabase.from("mandanten").update(payload).eq("id", editingMandant.id);
       if (error) {
@@ -231,26 +233,34 @@ export default function Mandanten() {
           : error.message;
         toast({ title: "Fehler beim Speichern", description: msg, variant: "destructive" });
         setLoading(false);
-        return;
+        return null;
       }
+      gespeicherteId = editingMandant.id;
       toast({ title: "Mandant aktualisiert" });
     } else {
-      const { error } = await supabase.from("mandanten").insert(payload as any);
-      if (error) {
+      const { data, error } = await supabase
+        .from("mandanten")
+        .insert(payload as any)
+        .select("id")
+        .single();
+      if (error || !data) {
         console.error("Insert mandant error:", error);
-        const msg = error.message?.includes("mandanten_nummer") || error.code === "23505"
+        const msg = error?.message?.includes("mandanten_nummer") || error?.code === "23505"
           ? "Diese Mandantennummer ist bereits vergeben. Bitte eine andere wählen."
-          : error.message;
+          : error?.message ?? "Unbekannter Fehler.";
         toast({ title: "Fehler beim Anlegen", description: msg, variant: "destructive" });
         setLoading(false);
-        return;
+        return null;
       }
+      gespeicherteId = data.id;
       toast({ title: "Mandant angelegt" });
     }
     setDialogOpen(false);
     setLoading(false);
     fetchMandanten();
+    return gespeicherteId;
   };
+
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -263,6 +273,31 @@ export default function Mandanten() {
     }
     setDeleteId(null);
   };
+
+  // Steuerkanal für das Tutorial — bedient denselben echten Dialog wie ein Nutzer.
+  useEffect(() => {
+    const setterFuer: Record<MandantFeld, (v: string) => void> = {
+      vorname: setFormVorname,
+      nachname: setFormNachname,
+      firma: setFormFirma,
+      telefon: setFormTelefon,
+      email: setFormEmail,
+      strasse: setFormStrasse,
+      plz: setFormPlz,
+      ort: setFormOrt,
+      notizen: setFormNotizen,
+    };
+    registerController("mandant", {
+      oeffnen: openCreate,
+      schliessen: () => setDialogOpen(false),
+      setzeFeld: (feld, wert) => setterFuer[feld]?.(wert),
+      setzeUnternehmensform: setFormUnternehmensform,
+      speichern: handleSave,
+    });
+    return () => registerController("mandant", null);
+  });
+
+
 
   if (rolle !== "Sekretariat" && rolle !== "Chef") {
     return (
@@ -281,7 +316,7 @@ export default function Mandanten() {
           <p className="text-sm text-muted-foreground mt-1">{mandanten.length.toLocaleString("de-DE")} Mandanten insgesamt.</p>
         </div>
         {(rolle === "Sekretariat" || rolle === "Chef") && (
-          <Button onClick={openCreate}>
+          <Button data-tour="neuer-mandant" onClick={openCreate}>
             <Plus className="h-4 w-4 mr-1" /> Neuer Mandant
           </Button>
         )}
@@ -374,7 +409,7 @@ export default function Mandanten() {
 
       {/* Create/Edit Dialog — single page, all fields */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-tour="mandant-dialog">
           <DialogHeader>
             <DialogTitle>{editingMandant ? "Mandant bearbeiten" : "Neuer Mandant"}</DialogTitle>
             <DialogDescription>
@@ -539,7 +574,8 @@ export default function Mandanten() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={loading}>Abbrechen</Button>
             <Button
-              onClick={handleSave}
+              data-tour="mandant-speichern"
+              onClick={() => { void handleSave(); }}
               disabled={
                 loading ||
                 !formNummerZahl.trim() ||
